@@ -5,7 +5,16 @@
 ## test（Future）
 
 ## task division
+- 前导任务
+
+编写Dockerfile和docker-compose.yml
+包含Open WebUI、LLM服务(Ollama)、向量数据库等所有依赖
+提交到代码仓库的/dev-environment目录
+
+另外两个同学克隆仓库，运行docker-compose up验证环境
+
 - 组员1（后端负责人：陈德凯）
+
 主要任务：选择题生成模块 + API 接口开发
 学习 Prompt Engineering，设计选择题生成格式（ JSON）
 写 Python 脚本调用本地模型（用 requests.post 调用 Ollama 接口）
@@ -23,6 +32,7 @@
 ```
 
 - 组员2（前端/UI负责人：江来）
+
 主要任务：气泡式交互前端开发
 学习 Svelte，使用 Tailwind 做美观 UI
 实现题目气泡展示（点击选项，反馈对错）
@@ -36,6 +46,7 @@
 加载下一题、评分等按钮交互
 
 - 组员3（知识库 & 模型集成负责人：张浩然）
+
 主要任务：知识库上传 + 文档向量化 + RAG 实现
 使用 LangChain / LlamaIndex / Haystack 等工具
 上传文档（.pdf/.txt），分段 -> 向量化（嵌入） -> 存入 FAISS 等
