@@ -133,3 +133,8 @@ https://github.com/open-webui/open-webui
 3. 可用性验证与测试：
 
 完成系统测试与调优，保证题目相关性、唯一性与可交互性；提交完整代码与可复现部署说明。
+
+
+## folders
+- backups: 备份文件夹，放一些原始文件防止需要还原
+- open-webui-main: open-webui的源码
