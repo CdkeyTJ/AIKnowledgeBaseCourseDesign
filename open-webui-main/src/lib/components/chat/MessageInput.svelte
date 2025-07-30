@@ -1317,7 +1317,7 @@
 											dir={$settings?.chatDirection ?? 'auto'}
 											bind:this={chatInputElement}
 											class="scrollbar-hidden bg-transparent dark:text-gray-200 outline-hidden w-full pt-3 px-1 resize-none"
-											placeholder={placeholder ? placeholder : $i18n.t('Send a Message')}
+											placeholder={placeholder ? placeholder : $i18n.t('Message')}
 											bind:value={prompt}
 											on:input={() => {
 												command = getCommand();
@@ -1759,7 +1759,7 @@
 															<CommandLine className="size-4" strokeWidth="1.75" />
 															<span
 																class="hidden @xl:block whitespace-nowrap overflow-hidden text-ellipsis leading-none pr-0.5"
-																>{$i18n.t('Code Interpreter')}</span
+																>{$i18n.t('哈基米哈基米哈基米哈基米')}</span
 															>
 														</button>
 													</Tooltip>
