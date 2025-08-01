@@ -71,6 +71,43 @@
 		messagesLoading = false;
 	};
 
+	onMount(() => {
+	  const testId = 'test-choice-question-1';
+	  if (!history?.messages?.[testId]) {
+		const newMessages = { ...(history.messages || {}) };
+		newMessages[testId] = {
+		id: testId,
+		role: 'assistant',
+		// content: {
+		// 	type: "choice_question",
+		// 	question: "下面哪一项属于AI模型训练的方法？",
+		// 	options: ["监督学习", "编译器优化", "网络爬虫", "数据库事务", "嵌入式系统"],
+		// 	answer: 0,
+		// 	explanation: "监督学习是一种使用带标签数据进行训练的AI方法。"
+		// },
+
+		content: {
+		  type: "true_false_question",
+		  question: "伽罗瓦是美国数学家",
+		  answer: false,
+		  explanation: "伽罗瓦是法国天才数学家，但是英年早逝。"
+		},
+
+		parentId: null,
+		childrenIds: [],
+		timestamp: Math.floor(Date.now() / 1000)
+		};
+
+		// 用赋值触发响应式
+		history = {
+		...history,
+		messages: newMessages,
+		currentId: testId
+		};
+	  }
+	});
+
+
 	$: if (history.currentId) {
 		let _messages = [];
 

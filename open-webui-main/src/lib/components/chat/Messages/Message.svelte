@@ -12,6 +12,9 @@
 	import ResponseMessage from './ResponseMessage.svelte';
 	import UserMessage from './UserMessage.svelte';
 
+	import ChoiceQuestionMessage from './ChoiceQuestionMessage.svelte';
+    import TrueFalseQuestionMessage from './TrueFalseQuestionMessage.svelte';
+
 	export let chatId;
 	export let selectedModels = [];
 	export let idx = 0;
@@ -41,6 +44,18 @@
 	export let addMessages;
 	export let triggerScroll;
 	export let readOnly = false;
+
+	$: if (history?.messages?.[messageId]) {
+		let msg = history.messages[messageId];
+		if (typeof msg.content === 'string' && msg.content.trim().startsWith('{')) {
+			try {
+			history.messages[messageId].content = JSON.parse(msg.content);
+			} catch {}
+		}
+	}
+
+	const message = history?.messages?.[messageId] ?? null;
+
 </script>
 
 <div
@@ -67,6 +82,10 @@
 				{deleteMessage}
 				{readOnly}
 			/>
+		{:else if history.messages[messageId].content.type === 'choice_question'}
+			<ChoiceQuestionMessage {message} {readOnly} />
+		{:else if history.messages[messageId].content.type === 'true_false_question'}
+			<TrueFalseQuestionMessage {message} {readOnly} />
 		{:else if (history.messages[history.messages[messageId].parentId]?.models?.length ?? 1) === 1}
 			<ResponseMessage
 				{chatId}
