@@ -35,47 +35,49 @@
     }
   }
 </style>
-<div class="flex items-center gap-2 text-lg text-muted-foreground font-semibold mb-2">
-  <List class="w-5 h-5 text-primary" />
-  单选题
-</div>
-<div class="bg-muted p-4 rounded-lg shadow w-full space-y-4">
-  <div class="text-base font-semibold text-foreground">{message.content.question}</div>
-
-  <div class="flex flex-col gap-2">
-    {#each message.content.options as option, i}
-      <button
-        class="choice-button px-4 py-2 text-left rounded-md border text-sm font-medium
-          {selectedIndex !== null
-            ? isCorrect(i)
-              ? 'bg-green-100 text-green-900 border-green-400'
-              : isSelected(i)
-                ? 'bg-red-100 text-red-900 border-red-400'
-                : 'bg-white text-black border-neutral-300'
-            : 'bg-white text-black border-neutral-300'}"
-        on:click={() => selectOption(i)}
-        disabled={readOnly || selectedIndex !== null}
-      >
-        {option}
-      </button>
-    {/each}
+<div class="pt-6">
+  <div class="flex items-center gap-2 text-lg text-muted-foreground font-semibold mb-2">
+    <List class="w-5 h-5 text-primary" />
+    单选题
   </div>
+  <div class="bg-muted p-4 rounded-lg shadow w-full space-y-4">
+    <div class="text-base font-semibold text-foreground">{message.content.question}</div>
 
-  {#if selectedIndex !== null}
-    <div class="text-sm mt-3 space-y-1">
-      <div class="font-medium {feedback.includes('正确') ? 'text-green-600' : 'text-red-600'}">
-        {feedback}
-      </div>
-      
-      {#if selectedIndex !== message.content.answer}
-        <div class="text-neutral-700">
-          正确答案是：<strong>{message.content.options[message.content.answer]}</strong>
-        </div>
-      {/if}
-
-      {#if message.content.explanation}
-        <div class="mt-1 text-muted-foreground italic">{message.content.explanation}</div>
-      {/if}
+    <div class="flex flex-col gap-2">
+      {#each message.content.options as option, i}
+        <button
+          class="choice-button px-4 py-2 text-left rounded-md border text-sm font-medium
+            {selectedIndex !== null
+              ? isCorrect(i)
+                ? 'bg-green-100 text-green-900 border-green-400'
+                : isSelected(i)
+                  ? 'bg-red-100 text-red-900 border-red-400'
+                  : 'bg-white text-black border-neutral-300'
+              : 'bg-white text-black border-neutral-300'}"
+          on:click={() => selectOption(i)}
+          disabled={readOnly || selectedIndex !== null}
+        >
+          {option}
+        </button>
+      {/each}
     </div>
-  {/if}
+
+    {#if selectedIndex !== null}
+      <div class="text-sm mt-3 space-y-1">
+        <div class="font-medium {feedback.includes('正确') ? 'text-green-600' : 'text-red-600'}">
+          {feedback}
+        </div>
+        
+        {#if selectedIndex !== message.content.answer}
+          <div class="text-neutral-700">
+            正确答案是：<strong>{message.content.options[message.content.answer]}</strong>
+          </div>
+        {/if}
+
+        {#if message.content.explanation}
+          <div class="mt-1 text-muted-foreground italic">{message.content.explanation}</div>
+        {/if}
+      </div>
+    {/if}
+  </div>
 </div>

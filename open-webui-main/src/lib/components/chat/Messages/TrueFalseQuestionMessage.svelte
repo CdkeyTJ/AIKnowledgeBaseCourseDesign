@@ -34,6 +34,7 @@
   }
 </style>
 
+<div class="pt-6">
 <div class="flex items-center gap-2 text-lg text-muted-foreground font-semibold mb-2">
   <CheckCheck class="w-5 h-5 text-primary" />
   判断题
@@ -95,4 +96,5 @@
       {/if}
     </div>
   {/if}
+</div>
 </div>
