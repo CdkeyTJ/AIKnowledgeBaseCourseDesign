@@ -101,12 +101,20 @@
 		// },
 
 
+		// content: {
+		//   type: "true_false_question",
+		//   question: "伽罗瓦是美国数学家",
+		//   answer: false,
+		//   explanation: "伽罗瓦是法国天才数学家，但是英年早逝。"
+		// },
+
 		content: {
-		  type: "true_false_question",
-		  question: "伽罗瓦是美国数学家",
-		  answer: false,
-		  explanation: "伽罗瓦是法国天才数学家，但是英年早逝。"
-		},
+          type: 'multiple_choice_question',
+          question: '下列哪些分子是组成细胞膜的主要成分？',
+          options: ['磷脂', 'DNA', '胆固醇', '蛋白质', '葡萄糖'],
+          answer: [0, 2, 3],
+          explanation: '细胞膜的主要成分包括磷脂双分子层、膜蛋白，以及一定量的胆固醇，起到结构稳定和流动性调节作用。'
+        },
 
 		parentId: null,
 		childrenIds: [],

@@ -14,6 +14,8 @@
 
 	import ChoiceQuestionMessage from './ChoiceQuestionMessage.svelte';
     import TrueFalseQuestionMessage from './TrueFalseQuestionMessage.svelte';
+	import MultipleChoiceQuestionMessage from './MultipleChoiceQuestionMessage.svelte';
+
 
 	export let chatId;
 	export let selectedModels = [];
@@ -86,6 +88,8 @@
 			<ChoiceQuestionMessage {message} {readOnly} />
 		{:else if history.messages[messageId].content.type === 'true_false_question'}
 			<TrueFalseQuestionMessage {message} {readOnly} />
+		{:else if history.messages[messageId].content.type === 'multiple_choice_question'}
+  			<MultipleChoiceQuestionMessage {message} {readOnly} />
 		{:else if (history.messages[history.messages[messageId].parentId]?.models?.length ?? 1) === 1}
 			<ResponseMessage
 				{chatId}
