@@ -1,0 +1,8 @@
+# IntelliJ IDEA
+*.iml
+*.ipr
+*.iws
+.idea/
+out/
+gen/
+build/
