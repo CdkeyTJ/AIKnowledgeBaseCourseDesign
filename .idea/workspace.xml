@@ -5,7 +5,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="5d13ef05-1d48-4b77-9fa1-14ba40bdf835" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/open-webui-main/docker-compose.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/open-webui-main/docker-compose.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/open-webui-main/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/open-webui-main/.gitignore" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -35,6 +36,7 @@
     "node.js.selected.package.eslint": "(autodetect)",
     "node.js.selected.package.tslint": "(autodetect)",
     "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "preferences.keymap",
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
@@ -60,7 +62,7 @@
       <workItem from="1754224098651" duration="1835000" />
       <workItem from="1754268412350" duration="16283000" />
       <workItem from="1754299031532" duration="3988000" />
-      <workItem from="1754356774022" duration="660000" />
+      <workItem from="1754356774022" duration="1570000" />
     </task>
     <servers />
   </component>
