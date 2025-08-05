@@ -85,6 +85,7 @@ from open_webui.routers import (
     tools,
     users,
     utils,
+    question, # @CDK:添加 question 路由
 )
 
 from open_webui.routers.retrieval import (
@@ -1211,6 +1212,8 @@ app.include_router(
 )
 app.include_router(utils.router, prefix="/api/v1/utils", tags=["utils"])
 
+# @CDK:添加 question 路由
+app.include_router(question.router)
 
 try:
     audit_level = AuditLevel(AUDIT_LOG_LEVEL)
