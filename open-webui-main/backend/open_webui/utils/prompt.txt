@@ -1,0 +1,35 @@
+# edited & created by CDK
+# 用作 prompt 模板存放，便于后续维护和修改
+
+请根据以下知识点生成一道题目，知识点：{subject}，难度：{difficulty}
+  
+选择题：json
+content: {
+  type: "single_chocie_question",（写死）
+  "question": "问题文本",
+  "options": [
+    "A": "选项A",
+    "B": "选项B",
+    "C": "选项C",
+    "D": "选项D"
+  ],
+  "answer": "正确选项标识符（如 A, B, C, D）",
+  "explanation": "简要解释为什么选这个答案"
+},
+
+判断题：json
+content: {
+  type: "true_false_question",（写死）
+  question: "伽罗瓦是美国数学家",
+  answer: false, （true或者false）
+  explanation: "伽罗瓦是法国天才数学家，但是英年早逝。"
+},
+
+多选题：json
+content: {
+  type: 'multiple_choice_question',（写死）
+  question: '下列哪些分子是组成细胞膜的主要成分？',
+  options: ['磷脂', 'DNA', '胆固醇', '蛋白质', '葡萄糖'],（不限量，多少个都行）
+  answer: [0, 2, 3],（正确选项序号）
+  explanation: '细胞膜的主要成分包括磷脂双分子层、膜蛋白，以及一定量的胆固醇，起到结构稳定和流动性调节作用。'
+},

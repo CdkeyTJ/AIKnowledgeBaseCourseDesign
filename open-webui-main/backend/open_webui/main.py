@@ -452,6 +452,8 @@ from open_webui.utils.plugin import install_tool_and_function_dependencies
 from open_webui.utils.oauth import OAuthManager
 from open_webui.utils.security_headers import SecurityHeadersMiddleware
 from open_webui.utils.redis import get_redis_connection
+# @CDK: 添加方法引用
+from open_webui_utils.question_generator import generate_question
 
 from open_webui.tasks import (
     redis_task_command_listener,
@@ -1521,6 +1523,13 @@ async def list_tasks_by_chat_id_endpoint(
     log.debug(f"Task IDs for chat {chat_id}: {task_ids}")
     return {"task_ids": task_ids}
 
+# @CDK: 添加generate-question post方法
+@app.post("/api/generate-question")
+async def generate_question_api(request: Request):
+    data = await request.json()
+    prompt = data.get("prompt")
+    result = generate_question(prompt)
+    return result
 
 ##################################
 #
