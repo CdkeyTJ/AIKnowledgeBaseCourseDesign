@@ -81,11 +81,11 @@ from open_webui.routers import (
     models,
     knowledge,
     prompts,
+    question, # @CDK: 添加 question 路由
     evaluations,
     tools,
     users,
     utils,
-    question, # @CDK:添加 question 路由
 )
 
 from open_webui.routers.retrieval import (
@@ -453,7 +453,7 @@ from open_webui.utils.oauth import OAuthManager
 from open_webui.utils.security_headers import SecurityHeadersMiddleware
 from open_webui.utils.redis import get_redis_connection
 # @CDK: 添加方法引用
-from open_webui_utils.question_generator import generate_question
+from open_webui.utils.question_generator import generate_question
 
 from open_webui.tasks import (
     redis_task_command_listener,
@@ -1202,6 +1202,7 @@ app.include_router(notes.router, prefix="/api/v1/notes", tags=["notes"])
 app.include_router(models.router, prefix="/api/v1/models", tags=["models"])
 app.include_router(knowledge.router, prefix="/api/v1/knowledge", tags=["knowledge"])
 app.include_router(prompts.router, prefix="/api/v1/prompts", tags=["prompts"])
+app.include_router(question.router, prefix="/api/v1/question", tags=["question"]) # @CDK:添加 question 路由
 app.include_router(tools.router, prefix="/api/v1/tools", tags=["tools"])
 
 app.include_router(memories.router, prefix="/api/v1/memories", tags=["memories"])
@@ -1213,9 +1214,6 @@ app.include_router(
     evaluations.router, prefix="/api/v1/evaluations", tags=["evaluations"]
 )
 app.include_router(utils.router, prefix="/api/v1/utils", tags=["utils"])
-
-# @CDK:添加 question 路由
-app.include_router(question.router)
 
 try:
     audit_level = AuditLevel(AUDIT_LOG_LEVEL)

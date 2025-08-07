@@ -6,16 +6,36 @@
 选择题：json
 content: {
   type: "single_chocie_question",（写死）
-  "question": "问题文本",
-  "options": [
+  question: "问题文本",
+  options: [
     "A": "选项A",
     "B": "选项B",
     "C": "选项C",
     "D": "选项D"
   ],
-  "answer": "正确选项标识符（如 A, B, C, D）",
-  "explanation": "简要解释为什么选这个答案"
+  answer: "正确选项标识符（如 A, B, C, D）",
+  explanation: "简要解释为什么选这个答案"
 },
+
+json：    
+单选题格式：    
+content: {
+  type: （题目类型，string）
+  question: （问题，string）,
+  options: （选项，任意大小数组）
+  answer: （答案，number(0, 1, 2, 3, ...)）,
+  explanation：（题目解释，string）
+},
+
+例如：
+content: {
+    type: "choice_question",
+    question: "下面哪一项属于AI模型训练的方法？",
+    options: ["监督学习", "编译器优化", "网络爬虫", "数据库事务", "嵌入式系统"],
+    answer: 0,
+    explanation: "监督学习是一种使用带标签数据进行训练的AI方法。"
+},
+
 
 判断题：json
 content: {

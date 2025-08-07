@@ -22,12 +22,6 @@ from sqlalchemy.pool import QueuePool, NullPool
 from sqlalchemy.sql.type_api import _T
 from typing_extensions import Self
 
-# changed by CDK 2025-08-06, MySQLDatabase and Router are not imported from peewee_migrate
-from peewee import MySQLDatabase
-from peewee_migrate import Router
-from urllib.parse import urlparse
-
-
 log = logging.getLogger(__name__)
 log.setLevel(SRC_LOG_LEVELS["DB"])
 
@@ -56,62 +50,29 @@ class JSONField(types.TypeDecorator):
 
 # Workaround to handle the peewee migration
 # This is required to ensure the peewee migration is handled before the alembic migration
-# def handle_peewee_migration(DATABASE_URL):
-#     # db = None
-#     try:
-#         # Replace the postgresql:// with postgres:// to handle the peewee migration
-#         db = register_connection(DATABASE_URL.replace("postgresql://", "postgres://"))
-#         migrate_dir = OPEN_WEBUI_DIR / "internal" / "migrations"
-#         router = Router(db, logger=log, migrate_dir=migrate_dir)
-#         router.run()
-#         db.close()
-
-#     except Exception as e:
-#         log.error(f"Failed to initialize the database connection: {e}")
-#         log.warning(
-#             "Hint: If your database password contains special characters, you may need to URL-encode it."
-#         )
-#         raise
-#     finally:
-#         # Properly closing the database connection
-#         if db and not db.is_closed():
-#             db.close()
-
-#         # Assert if db connection has been closed
-#         assert db.is_closed(), "Database connection is still open."
-
-# commented this the original handle_peewee_migration function
-# changed by CDK 2025-08-06, MySQLDatabase and Router are not imported from peewee_migrate
-# refer to https://blog.csdn.net/qq_26979493/article/details/146075978
-def handle_peewee_migration(database_url):
+def handle_peewee_migration(DATABASE_URL):
+    # db = None
     try:
-        # Parse the database URL
-        parsed_url = urlparse(database_url)
-        if parsed_url.scheme == "mysql+pymysql":
-            db = MySQLDatabase(
-                parsed_url.path.lstrip('/'),
-                user=parsed_url.username,
-                password=parsed_url.password,
-                host=parsed_url.hostname,
-                port=parsed_url.port or 3306,
-                charset='utf8mb4'
-            )
-        else:
-            # For other databases, use the existing logic
-            db = register_connection(database_url.replace("postgresql://", "postgres://"))
- 
+        # Replace the postgresql:// with postgres:// to handle the peewee migration
+        db = register_connection(DATABASE_URL.replace("postgresql://", "postgres://"))
         migrate_dir = OPEN_WEBUI_DIR / "internal" / "migrations"
         router = Router(db, logger=log, migrate_dir=migrate_dir)
         router.run()
         db.close()
+
     except Exception as e:
         log.error(f"Failed to initialize the database connection: {e}")
+        log.warning(
+            "Hint: If your database password contains special characters, you may need to URL-encode it."
+        )
         raise
     finally:
-        if 'db' in locals() and db and not db.is_closed():
+        # Properly closing the database connection
+        if db and not db.is_closed():
             db.close()
-        if 'db' in locals():
-            assert db.is_closed(), "Database connection is still open."
+
+        # Assert if db connection has been closed
+        assert db.is_closed(), "Database connection is still open."
 
 
 handle_peewee_migration(DATABASE_URL)
