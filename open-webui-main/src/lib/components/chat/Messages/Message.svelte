@@ -1,4 +1,6 @@
 <script lang="ts">
+// TODO：之前的组件是加在这里的，可以写在报告中
+
 	import { toast } from 'svelte-sonner';
 
 	import { tick, getContext, onMount, createEventDispatcher } from 'svelte';
@@ -11,11 +13,6 @@
 	import MultiResponseMessages from './MultiResponseMessages.svelte';
 	import ResponseMessage from './ResponseMessage.svelte';
 	import UserMessage from './UserMessage.svelte';
-
-	import ChoiceQuestionMessage from './ChoiceQuestionMessage.svelte';
-    import TrueFalseQuestionMessage from './TrueFalseQuestionMessage.svelte';
-	import MultipleChoiceQuestionMessage from './MultipleChoiceQuestionMessage.svelte';
-
 
 	export let chatId;
 	export let selectedModels = [];
@@ -84,12 +81,6 @@
 				{deleteMessage}
 				{readOnly}
 			/>
-		{:else if history.messages[messageId].content.type === 'choice_question'}
-			<ChoiceQuestionMessage {message} {readOnly} />
-		{:else if history.messages[messageId].content.type === 'true_false_question'}
-			<TrueFalseQuestionMessage {message} {readOnly} />
-		{:else if history.messages[messageId].content.type === 'multiple_choice_question'}
-  			<MultipleChoiceQuestionMessage {message} {readOnly} />
 		{:else if (history.messages[history.messages[messageId].parentId]?.models?.length ?? 1) === 1}
 			<ResponseMessage
 				{chatId}

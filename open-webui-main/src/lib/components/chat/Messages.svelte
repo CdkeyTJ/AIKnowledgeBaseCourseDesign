@@ -71,64 +71,65 @@
 		messagesLoading = false;
 	};
 
-	onMount(() => {
-	  const testId = 'test-choice-question-1';
-	  if (!history?.messages?.[testId]) {
-		const newMessages = { ...(history.messages || {}) };
-		newMessages[testId] = {
-		id: testId,
-		role: 'assistant',
-		// content: {
-		// 	type: "choice_question",
-		// 	question: "下面哪一项属于AI模型训练的方法？",
-		// 	options: ["监督学习", "编译器优化", "网络爬虫", "数据库事务", "嵌入式系统"],
-		// 	answer: 0,
-		// 	explanation: "监督学习是一种使用带标签数据进行训练的AI方法。"
-		// },
+	// TODO: 这里是之前做注入的，可以写在报告中
+	// onMount(() => {
+	//   const testId = 'test-choice-question-1';
+	//   if (!history?.messages?.[testId]) {
+	// 	const newMessages = { ...(history.messages || {}) };
+	// 	newMessages[testId] = {
+	// 	id: testId,
+	// 	role: 'assistant',
+	// 	// content: {
+	// 	// 	type: "choice_question",
+	// 	// 	question: "下面哪一项属于AI模型训练的方法？",
+	// 	// 	options: ["监督学习", "编译器优化", "网络爬虫", "数据库事务", "嵌入式系统"],
+	// 	// 	answer: 0,
+	// 	// 	explanation: "监督学习是一种使用带标签数据进行训练的AI方法。"
+	// 	// },
 
-		// content: {
-		// type: "choice_question",
-		// question: "下列哪种调控方式最可能导致哺乳动物在寒冷环境中非颤抖产热（non-shivering thermogenesis）增加？",
-		// options: [
-		// 	"A. 甲状腺激素水平下降",
-		// 	"B. 迷走神经活性增强",
-		// 	"C. 去甲肾上腺素在棕色脂肪组织的释放增加",
-		// 	"D. 胰岛素分泌增加",
-		// 	"E. 肾上腺皮质醇释放减少"
-		// ],
-		// answer: 2,
-		// explanation: "非颤抖产热主要发生在棕色脂肪组织（BAT），其调控依赖于交感神经系统的激活，特别是去甲肾上腺素（norepinephrine, NE）的释放。NE通过激活β3-肾上腺素受体，启动脂肪酸氧化和解偶联蛋白1（UCP1）的表达，从而促进产热。因此，选项 C 是正确答案。\n\n其他选项分析：\n- A：甲状腺激素促进基础代谢率，其下降会减少而非增加产热。\n- B：迷走神经主要促进副交感活动，与非颤抖产热无直接关系。\n- D：胰岛素主要促进葡萄糖摄取，不是非颤抖产热的直接调控因子。\n- E：皮质醇在慢性应激中调节代谢，但不直接驱动棕色脂肪产热。"
-		// },
+	// 	// content: {
+	// 	// type: "choice_question",
+	// 	// question: "下列哪种调控方式最可能导致哺乳动物在寒冷环境中非颤抖产热（non-shivering thermogenesis）增加？",
+	// 	// options: [
+	// 	// 	"A. 甲状腺激素水平下降",
+	// 	// 	"B. 迷走神经活性增强",
+	// 	// 	"C. 去甲肾上腺素在棕色脂肪组织的释放增加",
+	// 	// 	"D. 胰岛素分泌增加",
+	// 	// 	"E. 肾上腺皮质醇释放减少"
+	// 	// ],
+	// 	// answer: 2,
+	// 	// explanation: "非颤抖产热主要发生在棕色脂肪组织（BAT），其调控依赖于交感神经系统的激活，特别是去甲肾上腺素（norepinephrine, NE）的释放。NE通过激活β3-肾上腺素受体，启动脂肪酸氧化和解偶联蛋白1（UCP1）的表达，从而促进产热。因此，选项 C 是正确答案。\n\n其他选项分析：\n- A：甲状腺激素促进基础代谢率，其下降会减少而非增加产热。\n- B：迷走神经主要促进副交感活动，与非颤抖产热无直接关系。\n- D：胰岛素主要促进葡萄糖摄取，不是非颤抖产热的直接调控因子。\n- E：皮质醇在慢性应激中调节代谢，但不直接驱动棕色脂肪产热。"
+	// 	// },
 
 
-		// content: {
-		//   type: "true_false_question",
-		//   question: "伽罗瓦是美国数学家",
-		//   answer: false,
-		//   explanation: "伽罗瓦是法国天才数学家，但是英年早逝。"
-		// },
+	// 	// content: {
+	// 	//   type: "true_false_question",
+	// 	//   question: "伽罗瓦是美国数学家",
+	// 	//   answer: false,
+	// 	//   explanation: "伽罗瓦是法国天才数学家，但是英年早逝。"
+	// 	// },
 
-		content: {
-          type: 'multiple_choice_question',
-          question: '下列哪些分子是组成细胞膜的主要成分？',
-          options: ['磷脂', 'DNA', '胆固醇', '蛋白质', '葡萄糖'],
-          answer: [0, 2, 3],
-          explanation: '细胞膜的主要成分包括磷脂双分子层、膜蛋白，以及一定量的胆固醇，起到结构稳定和流动性调节作用。'
-        },
+	// 	content: {
+    //       type: 'multiple_choice_question',
+    //       question: '下列哪些分子是组成细胞膜的主要成分？',
+    //       options: ['磷脂', 'DNA', '胆固醇', '蛋白质', '葡萄糖'],
+    //       answer: [0, 2, 3],
+    //       explanation: '细胞膜的主要成分包括磷脂双分子层、膜蛋白，以及一定量的胆固醇，起到结构稳定和流动性调节作用。'
+    //     },
 
-		parentId: null,
-		childrenIds: [],
-		timestamp: Math.floor(Date.now() / 1000)
-		};
+	// 	parentId: null,
+	// 	childrenIds: [],
+	// 	timestamp: Math.floor(Date.now() / 1000)
+	// 	};
 
-		// 用赋值触发响应式
-		history = {
-		...history,
-		messages: newMessages,
-		currentId: testId
-		};
-	  }
-	});
+	// 	// 用赋值触发响应式
+	// 	history = {
+	// 	...history,
+	// 	messages: newMessages,
+	// 	currentId: testId
+	// 	};
+	//   }
+	// });
 
 
 	$: if (history.currentId) {

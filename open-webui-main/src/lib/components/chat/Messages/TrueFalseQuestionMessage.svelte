@@ -17,6 +17,17 @@
 </script>
 
 <style>
+    .header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    font-size: 1.125rem;
+    color: var(--muted-foreground);
+    margin-bottom: 0.5rem;
+    line-height: 0.1;
+  }
+
   button.choice-button {
     transition: all 0.2s ease;
   }
@@ -34,8 +45,8 @@
   }
 </style>
 
-<div class="pt-6">
-<div class="flex items-center gap-2 text-lg text-muted-foreground font-semibold mb-2">
+
+<div class="header">
   <CheckCheck class="w-5 h-5 text-primary" />
   判断题
 </div>
@@ -96,5 +107,4 @@
       {/if}
     </div>
   {/if}
-</div>
 </div>

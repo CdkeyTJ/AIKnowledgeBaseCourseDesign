@@ -54,6 +54,7 @@
     font-size: 1.125rem;
     color: var(--muted-foreground);
     margin-bottom: 0.5rem;
+    line-height: 0.1;
   }
   button.choice-button {
     border: 1px solid #ccc;
@@ -143,11 +144,12 @@
   }
 </style>
 
-<div class="choice-container">
+<div>
   <div class="header">
-    <CheckSquare class="w-5 h-5 text-primary" />
-    多选题
-  </div>
+  <CheckSquare />
+  多选题
+</div>
+
 
   <div class="question text-base font-semibold" style="color: var(--foreground); margin-bottom: 1rem;">
     {message.content.question}
