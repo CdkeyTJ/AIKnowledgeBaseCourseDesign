@@ -42,6 +42,10 @@
 
 	import DeleteConfirmDialog from '$lib/components/common/ConfirmDialog.svelte';
 
+	import ChoiceQuestionMessage from './ChoiceQuestionMessage.svelte';
+	import TrueFalseQuestionMessage from './TrueFalseQuestionMessage.svelte';
+	import MultipleChoiceQuestionMessage from './MultipleChoiceQuestionMessage.svelte';
+
 	import Error from './Error.svelte';
 	import Citations from './Citations.svelte';
 	import CodeExecutions from './CodeExecutions.svelte';
@@ -790,10 +794,17 @@
 								</div>
 							</div>
 						{:else}
+						    <!-- TODO:这里添加了三个组件 -->
 							<div class="w-full flex flex-col relative" id="response-content-container">
 								{#if message.content === '' && !message.error && (message?.statusHistory ?? [...(message?.status ? [message?.status] : [])]).length === 0}
 									<Skeleton />
-								{:else if message.content && message.error !== true}
+								{:else if message.content.type === 'choice_question'}
+									<ChoiceQuestionMessage {message} {readOnly} />
+								{:else if message.content.type === 'true_false_question'}
+									<TrueFalseQuestionMessage {message} {readOnly} />
+								{:else if message.content.type === 'multiple_choice_question'}
+									<MultipleChoiceQuestionMessage {message} {readOnly} />
+								{:else if message.content && !message.content.type && message.error !== true}
 									<!-- always show message contents even if there's an error -->
 									<!-- unless message.error === true which is legacy error handling, where the error message is stored in message.content -->
 									<ContentRenderer

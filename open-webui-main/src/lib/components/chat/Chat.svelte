@@ -1377,9 +1377,75 @@
 	//////////////////////////
 	// Chat functions
 	//////////////////////////
+	async function generateQuestionsFromPrompt(prompt) {
+		// TODO：这里替换成实际调用你的题库API或后端接口逻辑
+		// 目前示例返回固定题目
+		return [
+			{
+				type: 'choice_question',
+				question: '下列哪项是编程语言？',
+				options: ['HTML', 'CSS', 'JavaScript', 'HTTP'],
+				answer: 2,
+				explanation: 'JavaScript 是编程语言。'
+			},
+			// {
+			// type: 'true_false_question',
+			// question: '太阳从西边升起。',
+			// answer: false,
+			// explanation: '太阳从东边升起。'
+			// }
+		];
+	}
 
 	const submitPrompt = async (userPrompt, { _raw = false } = {}) => {
 		console.log('submitPrompt', userPrompt, $chatId);
+
+		// TODO:这里也可以写在报告内
+		// // 检测用户是否请求生成题目
+		// if (/帮我(出|生成|做|写|制作).*题/.test(userPrompt)) {
+		// 	// 异步调用题目生成函数（你自己实现或调用后端）
+		// 	const questions = await generateQuestionsFromPrompt(userPrompt);
+		// 	// const questions = {
+		// 	// 	type: 'choice_question',
+		// 	// 	question: '下列哪项是编程语言？',
+		// 	// 	options: ['HTML', 'CSS', 'JavaScript', 'HTTP'],
+		// 	// 	answer: 2,
+		// 	// 	explanation: 'JavaScript 是编程语言。'
+		// 	// };
+
+		// 	const questionMessageId = uuidv4();
+		// 	const questionMessage = {
+		// 		id: questionMessageId,
+		// 		model: 'qwen2.5:3b',
+		// 		role: 'assistant',
+		// 		type: 'questions',       // 自定义字段，用于前端区分渲染
+		// 		done: true,
+		// 		content: questions[0],      // 题目数组或题目json
+		// 		timestamp: Math.floor(Date.now() / 1000),
+
+		// 		childrenIds: [],
+		// 		parentId: history.currentId || null
+		// 	};
+
+		// 	history.messages[messageId] = questionMessage;
+
+		// 	if (history.currentId) {
+		// 		history.messages[history.currentId].childrenIds.push(messageId);
+		// 	}
+
+		// 	history.currentId = messageId;
+
+		// 	// 触发响应式更新
+		// 	history = { ...history };
+
+		// 	// ④ 聚焦输入框
+		// 	document.getElementById('chat-input')?.focus();
+
+		// 	// ⑤ 结束函数，不进入后续流程（不再调用sendPrompt）
+		// 	return;
+		// }
+		// // // // //
+
 
 		const messages = createMessagesList(history, history.currentId);
 		const _selectedModels = selectedModels.map((modelId) =>
@@ -1482,6 +1548,10 @@
 		await sendPrompt(history, userPrompt, userMessageId, { newChat: true });
 	};
 
+	function isGenerateQuestionPrompt(prompt: string): boolean {
+		return (/帮我(出|生成|做|写|制作).*题/.test(prompt))
+	}
+
 	const sendPrompt = async (
 		_history,
 		prompt: string,
@@ -1514,11 +1584,48 @@
 					id: responseMessageId,
 					childrenIds: [],
 					role: 'assistant',
-					content: '',
+					done: false,
+					content: "",
 					model: model.id,
 					modelName: model.name ?? model.id,
 					modelIdx: modelIdx ? modelIdx : _modelIdx,
 					timestamp: Math.floor(Date.now() / 1000) // Unix epoch
+				};
+
+				if(isGenerateQuestionPrompt(prompt)) {
+					// responseMessage.content = {
+					// 	type: 'multiple_choice_question',
+					// 	question: '下列哪些分子是组成细胞膜的主要成分？',
+					// 	options: ['磷脂', 'DNA', '胆固醇', '蛋白质', '葡萄糖'],
+					// 	answer: [0, 2, 3],
+					// 	explanation: '细胞膜的主要成分包括磷脂双分子层、膜蛋白，以及一定量的胆固醇，起到结构稳定和流动性调节作用。'
+					// },
+
+					// responseMessage.content = {
+					// 	type: "true_false_question",
+					// 	question: "伽罗瓦是美国数学家",
+					// 	answer: false,
+					// 	explanation: "伽罗瓦是法国天才数学家，但是英年早逝。"
+					// },
+
+					responseMessage.content = {
+					type: "choice_question",
+					question: "下列哪种调控方式最可能导致哺乳动物在寒冷环境中非颤抖产热（non-shivering thermogenesis）增加？",
+					options: [
+						"A. 甲状腺激素水平下降",
+						"B. 迷走神经活性增强",
+						"C. 去甲肾上腺素在棕色脂肪组织的释放增加",
+						"D. 胰岛素分泌增加",
+						"E. 肾上腺皮质醇释放减少"
+					],
+					answer: 2,
+					explanation: "非颤抖产热主要发生在棕色脂肪组织（BAT），其调控依赖于交感神经系统的激活，特别是去甲肾上腺素（norepinephrine, NE）的释放。NE通过激活β3-肾上腺素受体，启动脂肪酸氧化和解偶联蛋白1（UCP1）的表达，从而促进产热。因此，选项 C 是正确答案。\n\n其他选项分析：\n- A：甲状腺激素促进基础代谢率，其下降会减少而非增加产热。\n- B：迷走神经主要促进副交感活动，与非颤抖产热无直接关系。\n- D：胰岛素主要促进葡萄糖摄取，不是非颤抖产热的直接调控因子。\n- E：皮质醇在慢性应激中调节代谢，但不直接驱动棕色脂肪产热。"
+					},
+					
+					responseMessage.done = true;
+				} else {
+					responseMessage.content = "";
+					responseMessage.done = false;
 				};
 
 				// Add message to history and Set currentId to messageId
@@ -1550,45 +1657,48 @@
 		// Save chat after all messages have been created
 		await saveChatHandler(_chatId, _history);
 
-		await Promise.all(
-			selectedModelIds.map(async (modelId, _modelIdx) => {
-				console.log('modelId', modelId);
-				const model = $models.filter((m) => m.id === modelId).at(0);
+		if(!isGenerateQuestionPrompt(prompt)){
+			await Promise.all(
+				selectedModelIds.map(async (modelId, _modelIdx) => {
+					console.log('modelId', modelId);
+					const model = $models.filter((m) => m.id === modelId).at(0);
 
-				if (model) {
-					const messages = createMessagesList(_history, parentId);
-					// If there are image files, check if model is vision capable
-					const hasImages = messages.some((message) =>
-						message.files?.some((file) => file.type === 'image')
-					);
-
-					if (hasImages && !(model.info?.meta?.capabilities?.vision ?? true)) {
-						toast.error(
-							$i18n.t('Model {{modelName}} is not vision capable', {
-								modelName: model.name ?? model.id
-							})
+					if (model) {
+						const messages = createMessagesList(_history, parentId);
+						// If there are image files, check if model is vision capable
+						const hasImages = messages.some((message) =>
+							message.files?.some((file) => file.type === 'image')
 						);
+
+						if (hasImages && !(model.info?.meta?.capabilities?.vision ?? true)) {
+							toast.error(
+								$i18n.t('Model {{modelName}} is not vision capable', {
+									modelName: model.name ?? model.id
+								})
+							);
+						}
+
+						let responseMessageId =
+							responseMessageIds[`${modelId}-${modelIdx ? modelIdx : _modelIdx}`];
+						const chatEventEmitter = await getChatEventEmitter(model.id, _chatId);
+
+						scrollToBottom();
+						await sendPromptSocket(_history, model, responseMessageId, _chatId);
+
+						if (chatEventEmitter) clearInterval(chatEventEmitter);
+					} else {
+						toast.error($i18n.t(`Model {{modelId}} not found`, { modelId }));
 					}
-
-					let responseMessageId =
-						responseMessageIds[`${modelId}-${modelIdx ? modelIdx : _modelIdx}`];
-					const chatEventEmitter = await getChatEventEmitter(model.id, _chatId);
-
-					scrollToBottom();
-					await sendPromptSocket(_history, model, responseMessageId, _chatId);
-
-					if (chatEventEmitter) clearInterval(chatEventEmitter);
-				} else {
-					toast.error($i18n.t(`Model {{modelId}} not found`, { modelId }));
-				}
-			})
-		);
+				})
+			);
+		}
 
 		currentChatPage.set(1);
 		chats.set(await getChatList(localStorage.token, $currentChatPage));
 	};
 
 	const sendPromptSocket = async (_history, model, responseMessageId, _chatId) => {
+		console.log('test');
 		const chatMessages = createMessagesList(history, history.currentId);
 		const responseMessage = _history.messages[responseMessageId];
 		const userMessage = _history.messages[responseMessage.parentId];
@@ -1654,6 +1764,15 @@
 		].filter((message) => message);
 
 		messages = messages
+			.filter((message) => {
+				// 如果是用户消息并且是“出题请求”，就跳过，不发给模型
+				if (
+				message.role === 'user' &&
+				typeof message.content === 'string' &&
+				isGenerateQuestionPrompt(message.content)
+				) {return false;}
+				return true;
+			})
 			.map((message, idx, arr) => ({
 				role: message.role,
 				...((message.files?.filter((file) => file.type === 'image').length > 0 ?? false) &&
@@ -1678,7 +1797,7 @@
 							content: message?.merged?.content ?? message.content
 						})
 			}))
-			.filter((message) => message?.role === 'user' || message?.content?.trim());
+			.filter((message) => message?.role === 'user' || (typeof message?.content === 'string' && message?.content?.trim()));
 
 		const res = await generateOpenAIChatCompletion(
 			localStorage.token,

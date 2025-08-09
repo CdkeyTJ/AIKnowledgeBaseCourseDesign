@@ -837,6 +837,11 @@ export const cleanText = (content: string) => {
 };
 
 export const removeDetails = (content, types) => {
+	if (typeof content !== 'string') {
+		// 如果不是字符串，直接返回原始内容或转换为字符串
+		return content;
+	}
+
 	for (const type of types) {
 		content = content.replace(
 			new RegExp(`<details\\s+type="${type}"[^>]*>.*?<\\/details>`, 'gis'),
@@ -853,6 +858,11 @@ export const removeAllDetails = (content) => {
 };
 
 export const processDetails = (content) => {
+	if (typeof content !== 'string') {
+		// 不是字符串，直接返回原值
+		return content;
+	};
+	
 	content = removeDetails(content, ['reasoning', 'code_interpreter']);
 
 	// This regex matches <details> tags with type="tool_calls" and captures their attributes to convert them to a string
