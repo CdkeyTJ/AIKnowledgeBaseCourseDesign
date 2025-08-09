@@ -452,8 +452,7 @@ from open_webui.utils.plugin import install_tool_and_function_dependencies
 from open_webui.utils.oauth import OAuthManager
 from open_webui.utils.security_headers import SecurityHeadersMiddleware
 from open_webui.utils.redis import get_redis_connection
-# @CDK: 添加方法引用
-from open_webui.utils.question_generator import generate_question
+from open_webui.utils.question_generator import generate_question # @CDK: 添加方法引用
 
 from open_webui.tasks import (
     redis_task_command_listener,

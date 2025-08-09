@@ -1635,3 +1635,44 @@ export const updateModelConfig = async (token: string, config: GlobalModelConfig
 
 	return res;
 };
+
+// @CDK:添加Generate-question函数
+export const generateQuestion = async (
+	token: string = '',
+	prompt: string,
+	subject: string = '数学',
+	difficulty: string = '中等'
+) => {
+	let error = null;
+
+	const res = await fetch(`${WEBUI_BASE_URL}/api/generate-question`, {
+		method: 'POST',
+		headers: {
+			Accept: 'application/json',
+			'Content-Type': 'application/json',
+			...(token && { Authorization: `Bearer ${token}` })
+		},
+		body: JSON.stringify({
+			prompt: prompt,
+			subject: subject,
+			difficulty: difficulty
+		})
+	})
+		.then(async (res) => {
+			if (!res.ok) throw await res.json();
+			return res.json();
+		})
+		.catch((err) => {
+			console.error(err);
+			if ('detail' in err) {
+				error = err.detail;
+			}
+			return null;
+		});
+
+	if (error) {
+		throw error;
+	}
+
+	return res;
+};
