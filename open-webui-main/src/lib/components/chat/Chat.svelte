@@ -77,6 +77,7 @@
 		getTaskIdsByChatId
 	} from '$lib/apis';
 	import { getTools } from '$lib/apis/tools';
+	import { generateQuestion } from '$lib/apis/question'; //@CDK:添加方法 
 
 	import Banner from '../common/Banner.svelte';
 	import MessageInput from '$lib/components/chat/MessageInput.svelte';
@@ -1377,6 +1378,48 @@
 	//////////////////////////
 	// Chat functions
 	//////////////////////////
+	async function generateQuestionsFromPrompt(prompt) {
+		// TODO：这里替换成实际调用你的题库API或后端接口逻辑：@CDK: 实现
+		try {
+			// 调用后端API生成题目
+			const result = await generateQuestion('', prompt, '数学', '中等');
+
+			// 如果后端返回的是数组格式，直接返回
+			if (Array.isArray(result)) {
+				return result;
+			}
+
+			// 如果后端返回的是对象格式，尝试提取题目数据
+			if (result && result.questions) {
+				return result.questions;
+			}
+
+			// 如果都没有，返回默认题目
+			return [
+				{
+					type: 'choice_question',
+					question: '下列哪项是编程语言？（出现此题目说明后端生成题目失败）',
+					options: ['HTML', 'CSS', 'JavaScript', 'HTTP'],
+					answer: 2,
+					explanation: 'JavaScript 是编程语言。'
+				}
+			];
+
+		} catch (error) {
+			console.error('生成题目失败:', error);
+			// 返回默认题目作为备选
+			return [
+				{
+					type: 'choice_question',
+					question: '下列哪项是编程语言？（出现此题目说明后端生成题目失败且前端遭遇错误）',
+					options: ['HTML', 'CSS', 'JavaScript', 'HTTP'],
+					answer: 2,
+					explanation: 'JavaScript 是编程语言。'
+				}
+			];
+		}
+	}
+
 	const submitPrompt = async (userPrompt, { _raw = false } = {}) => {
 		console.log('submitPrompt', userPrompt, $chatId);
 
@@ -1528,6 +1571,7 @@
 		await sendPrompt(history, userPrompt, userMessageId, { newChat: true });
 	};
 
+	// @CDK: TODO这里可以修改为正则，可以添加选择/多选/判断
 	function isGenerateQuestionPrompt(prompt: string): boolean {
 		return (/帮我(出|生成|做|写|制作).*题/.test(prompt))
 	}
@@ -1630,6 +1674,22 @@
 						explanation: "伽罗瓦是法国天才数学家，但是英年早逝。"
 						};
 					}
+					// 	type: "choice_question",
+					// 	question: "下列哪种调控方式最可能导致哺乳动物在寒冷环境中非颤抖产热（non-shivering thermogenesis）增加？",
+					// 	options: [
+					// 		"A. 甲状腺激素水平下降",
+					// 		"B. 迷走神经活性增强",
+					// 		"C. 去甲肾上腺素在棕色脂肪组织的释放增加",
+					// 		"D. 胰岛素分泌增加",
+					// 		"E. 肾上腺皮质醇释放减少"
+					// 	],
+					// 	answer: 2,
+					// 	explanation: "非颤抖产热主要发生在棕色脂肪组织（BAT），其调控依赖于交感神经系统的激活，特别是去甲肾上腺素（norepinephrine, NE）的释放。NE通过激活β3-肾上腺素受体，启动脂肪酸氧化和解偶联蛋白1（UCP1）的表达，从而促进产热。因此，选项 C 是正确答案。\n\n其他选项分析：\n- A：甲状腺激素促进基础代谢率，其下降会减少而非增加产热。\n- B：迷走神经主要促进副交感活动，与非颤抖产热无直接关系。\n- D：胰岛素主要促进葡萄糖摄取，不是非颤抖产热的直接调控因子。\n- E：皮质醇在慢性应激中调节代谢，但不直接驱动棕色脂肪产热。"
+					// },
+
+					// responseMessage.content = await generateQuestionsFromPrompt(prompt)
+					const questions = await generateQuestionsFromPrompt(prompt); // 等待返回题目内容
+       				responseMessage.content = questions[0]; // 或者根据需要处理多个题目
 					
 					responseMessage.done = true;
 				} else {
@@ -1987,6 +2047,8 @@
 		}
 	};
 
+	// 核心的消息提交处理函数，
+	// 主要负责处理用户输入的消息并生成AI回复核心的消息提交处理函数
 	const submitMessage = async (parentId, prompt) => {
 		let userPrompt = prompt;
 		let userMessageId = uuidv4();

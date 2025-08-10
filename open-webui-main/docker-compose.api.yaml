@@ -1,3 +1,4 @@
+
 services:
   ollama:
     # Expose Ollama API outside the container stack
