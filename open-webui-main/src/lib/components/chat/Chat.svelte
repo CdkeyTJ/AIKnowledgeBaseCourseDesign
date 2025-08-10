@@ -1377,26 +1377,6 @@
 	//////////////////////////
 	// Chat functions
 	//////////////////////////
-	async function generateQuestionsFromPrompt(prompt) {
-		// TODO：这里替换成实际调用你的题库API或后端接口逻辑
-		// 目前示例返回固定题目
-		return [
-			{
-				type: 'choice_question',
-				question: '下列哪项是编程语言？',
-				options: ['HTML', 'CSS', 'JavaScript', 'HTTP'],
-				answer: 2,
-				explanation: 'JavaScript 是编程语言。'
-			},
-			// {
-			// type: 'true_false_question',
-			// question: '太阳从西边升起。',
-			// answer: false,
-			// explanation: '太阳从东边升起。'
-			// }
-		];
-	}
-
 	const submitPrompt = async (userPrompt, { _raw = false } = {}) => {
 		console.log('submitPrompt', userPrompt, $chatId);
 
@@ -1552,6 +1532,24 @@
 		return (/帮我(出|生成|做|写|制作).*题/.test(prompt))
 	}
 
+	async function fetchGeneratedQuestion(prompt: string) {
+		try {
+			const response = await fetch("http://127.0.0.1:8080/api/v1/question/generate-question", {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ prompt })
+			});
+			if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+			const result = await response.json();
+			if (result.code === 0) return result.data;
+			else throw new Error(`API error: ${result.msg}`);
+		} catch (err) {
+			console.error("Failed to fetch question:", err);
+			return null;
+		}
+	}
+
+
 	const sendPrompt = async (
 		_history,
 		prompt: string,
@@ -1608,19 +1606,30 @@
 					// 	explanation: "伽罗瓦是法国天才数学家，但是英年早逝。"
 					// },
 
-					responseMessage.content = {
-					type: "choice_question",
-					question: "下列哪种调控方式最可能导致哺乳动物在寒冷环境中非颤抖产热（non-shivering thermogenesis）增加？",
-					options: [
-						"A. 甲状腺激素水平下降",
-						"B. 迷走神经活性增强",
-						"C. 去甲肾上腺素在棕色脂肪组织的释放增加",
-						"D. 胰岛素分泌增加",
-						"E. 肾上腺皮质醇释放减少"
-					],
-					answer: 2,
-					explanation: "非颤抖产热主要发生在棕色脂肪组织（BAT），其调控依赖于交感神经系统的激活，特别是去甲肾上腺素（norepinephrine, NE）的释放。NE通过激活β3-肾上腺素受体，启动脂肪酸氧化和解偶联蛋白1（UCP1）的表达，从而促进产热。因此，选项 C 是正确答案。\n\n其他选项分析：\n- A：甲状腺激素促进基础代谢率，其下降会减少而非增加产热。\n- B：迷走神经主要促进副交感活动，与非颤抖产热无直接关系。\n- D：胰岛素主要促进葡萄糖摄取，不是非颤抖产热的直接调控因子。\n- E：皮质醇在慢性应激中调节代谢，但不直接驱动棕色脂肪产热。"
-					},
+					// responseMessage.content = {
+					// type: "choice_question",
+					// question: "下列哪种调控方式最可能导致哺乳动物在寒冷环境中非颤抖产热（non-shivering thermogenesis）增加？",
+					// options: [
+					// 	"A. 甲状腺激素水平下降",
+					// 	"B. 迷走神经活性增强",
+					// 	"C. 去甲肾上腺素在棕色脂肪组织的释放增加",
+					// 	"D. 胰岛素分泌增加",
+					// 	"E. 肾上腺皮质醇释放减少"
+					// ],
+					// answer: 2,
+					// explanation: "非颤抖产热主要发生在棕色脂肪组织（BAT），其调控依赖于交感神经系统的激活，特别是去甲肾上腺素（norepinephrine, NE）的释放。NE通过激活β3-肾上腺素受体，启动脂肪酸氧化和解偶联蛋白1（UCP1）的表达，从而促进产热。因此，选项 C 是正确答案。\n\n其他选项分析：\n- A：甲状腺激素促进基础代谢率，其下降会减少而非增加产热。\n- B：迷走神经主要促进副交感活动，与非颤抖产热无直接关系。\n- D：胰岛素主要促进葡萄糖摄取，不是非颤抖产热的直接调控因子。\n- E：皮质醇在慢性应激中调节代谢，但不直接驱动棕色脂肪产热。"
+					// },
+					const questionData = await fetchGeneratedQuestion(prompt);
+					if (questionData) {
+						responseMessage.content = questionData;
+					} else {
+						responseMessage.content = {
+						type: "true_false_question",
+						question: "伽罗瓦是美国数学家",
+						answer: false,
+						explanation: "伽罗瓦是法国天才数学家，但是英年早逝。"
+						};
+					}
 					
 					responseMessage.done = true;
 				} else {

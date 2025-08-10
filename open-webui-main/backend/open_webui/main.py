@@ -81,6 +81,7 @@ from open_webui.routers import (
     models,
     knowledge,
     prompts,
+    question,
     evaluations,
     tools,
     users,
@@ -1199,6 +1200,7 @@ app.include_router(notes.router, prefix="/api/v1/notes", tags=["notes"])
 app.include_router(models.router, prefix="/api/v1/models", tags=["models"])
 app.include_router(knowledge.router, prefix="/api/v1/knowledge", tags=["knowledge"])
 app.include_router(prompts.router, prefix="/api/v1/prompts", tags=["prompts"])
+app.include_router(question.router, prefix="/api/v1/question", tags=["question"]) # @CDK:添加 question 路由
 app.include_router(tools.router, prefix="/api/v1/tools", tags=["tools"])
 
 app.include_router(memories.router, prefix="/api/v1/memories", tags=["memories"])
