@@ -1,8 +1,5 @@
 # AIKnowledgeBaseCourseDesign
 
-backend分支暂停使用
-2025/8/10 21：05
-
 [TOC]
 
 ## test（Future）
