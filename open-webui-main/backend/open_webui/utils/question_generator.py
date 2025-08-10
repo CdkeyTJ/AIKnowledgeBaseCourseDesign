@@ -35,64 +35,8 @@ test_json = {
     ]
 }
 
-test_knowledge = """
-https://zh.wikipedia.org/wiki/%E6%A0%B8%E9%85%B8#
 
-核酸（英语：nucleic acid）是一种通常位于细胞内的大型生物分子，主要负责生物体遗传信息的携带和传递。核酸有两大类，分别是脱氧核糖核酸（DNA）和核糖核酸（RNA）。
-
-核酸的单体结构为核苷酸。每一个核苷酸分子由三部分组成：一个五碳糖、一个含氮碱基和一个或多个磷酸基团。如果其五碳糖是脱氧核糖则为脱氧核糖核苷酸，此单体之聚合物是DNA。如果其五碳糖是核糖则为核糖核苷酸，此单体之聚合物是RNA。
-
-核酸是最重要的生物大分子（其余为氨基酸/蛋白质，糖类/碳水化合物和脂质/脂肪）。它们大量存在于所有生物，功能有编码、传递和表达遗传信息。换句话说，遗传消息通过核酸序列被传递。DNA分子含有生物物种的所有遗传信息，为双链分子，其中大多数是链状结构大分子，也有少部分呈环状结构，分子量一般都很大。RNA主要是负责DNA遗传信息的翻译和表达，为单链分子，分子量要比DNA小得多。
-
-核酸存在于所有动植物细胞、微生物和病毒、噬菌体内，是生命的最基本物质之一，对生物的成长、遗传、变异等现象起着重要的决定作用。
-
-研究历史
-1869年，核酸被科学家弗雷德里希·米歇尔发现[1]。当时该物质被他称为“核素”。
-1880年代早期，阿尔布雷希特·科塞尔进一步纯化了该物质，并发现了其具有高酸性特性。
-1889年，理查德·阿尔特曼创造了nucleic acid（核酸）一词。
-20世纪早期，阿尔布雷希特·科塞尔与他的两个学生发现核酸由核苷酸组成[4]。但当时科塞尔错误地认为核酸由4种核苷酸的重复单位构成。[5]
-1953年，沃森和克里克等人发现了DNA的双螺旋结构。[6]
-核酸实验研究构成了现代生物学和医学研究的重要组成部分，形成了基因组和法医学，以及生物技术和制药行业的基础[7][8][9]。
-
-脱氧核糖核酸
-主条目：脱氧核糖核酸
-
-脱氧核糖核酸（DNA）。
-脱氧核糖核酸（DNA）是由脱氧核糖核苷酸构成的一种核酸。其主要负责生物体遗传信息的携带。组成DNA的碱基有四种：腺嘌呤（A）、鸟嘌呤（G）、胸腺嘧啶（T）与胞嘧啶（C）。DNA主要为双链构成的双螺旋结构，但病毒中也有单链DNA[4]。利用体外分子进化技术，也可合成出类似核酶的脱氧核酶[10]。
-
-核糖核酸
-主条目：核糖核酸
-核糖核酸（RNA）由核糖核苷酸构成，其功能包括遗传信息的传递与核酶等，而一些病毒使用RNA携带遗传信息。组成RNA的碱基中，尿嘧啶（U）代替了胸腺嘧啶。RNA一般为单链。
-
-核酸类似物
-除此之外，也可以通过人工合成出核酸类似物（Nucleic acid analogues）。如肽核酸、锁核酸、GNA、苏糖核酸等。核酸类似物通过不同的分子骨架而与自然产生的DNA或RNA区分开来。
-
-结构和组成
-组成
-核酸由核苷酸组成，而核苷酸又是由含氮碱基、五碳糖和磷酸基构成。
-
-核苷酸
-主条目：核苷酸
-核酸的单体结构为核苷酸。每一个核苷酸分子有三部分组成：一个含氮碱基，一个五碳糖和一个或多个磷酸基团。由含氮碱基和五碳糖组成的结构叫做核苷。
-
-碱基
-主条目：核碱基
-含氮碱基是两种母体分子嘌呤和嘧啶的派生物。一般，组成核酸的碱基有五种，分别是：
-
-腺嘌呤（A）
-鸟嘌呤（G）
-胞嘧啶（C）
-胸腺嘧啶（T，又称5-甲基尿嘧啶[5]，在RNA中一般由尿嘧啶代替）
-尿嘧啶（U，在DNA中由胸腺嘧啶代替）
-除了以上五种碱基之外，部分核酸还含有特殊碱基。即稀有碱基。
-
-核苷
-主条目：核苷
-核苷是由含氮碱基和戊糖组成的糖苷[5]。核苷加上一个磷酸基就是核苷酸。
-"""
-
-
-def build_prompt(knowledge, user_instruction, type_instruction="", difficulty=""):
+def build_prompt(knowledge, type_instruction="", difficulty=""):
     # 获取当前脚本的绝对路径
     script_dir = os.path.dirname(os.path.abspath(__file__))
 
@@ -109,12 +53,12 @@ def build_prompt(knowledge, user_instruction, type_instruction="", difficulty=""
             types = ["单选题", "多选题", "判断题"]
             type_instruction = random.choice(types)
         if not difficulty:
-            # 随机选择题目难度和概率
+            # 随机选择题目难度
             hardness = ["简单", "普通", "易混", "困难"]
+            # 对应的概率（权重），顺序对应
             weights = [0.25, 0.4, 0.25, 0.1]
-
-            difficulty = random.choices(hardness, weights=weights, k=1)[0]
-        return template.format(knowledge=knowledge, user_instruction=user_instruction, type_instruction=type_instruction, difficulty=difficulty)
+            difficulty = random.choice(hardness, weights=weights, k=1)[0]
+        return template.format(knowledge, type_instruction=type_instruction, difficulty=difficulty)
     except FileNotFoundError:
         raise FileNotFoundError(f"找不到提示文件: {prompt_path}")
     except KeyError as e:
@@ -127,7 +71,7 @@ def call_qwen_model(prompt):
     # 假设本地 Ollama/LMDeploy/其他服务已启动，端口和API需根据实际情况调整
     url = "http://localhost:11434/api/generate"
     payload = {
-        "model": "qwen2.5:7b", # TODO：用户可更改模型
+        "model": "qwen2.5:3b",
         "prompt": prompt,
         "stream": False
     }
@@ -247,17 +191,15 @@ def parse_model_output(output):
 
     return None
 
-# 以后可能要添加用户Knowledge接口
-def generate_question(user_instruction="", type_instruction="", difficulty=""):
+
+def generate_question(type_instruction="", subject="数学", difficulty="中等", ):
     """
     生成题目主函数
     返回: 题目列表（list of questions）返回标准格式：{ "questions": [...] }
     """
-    # return test_json
-    # knowledge = RAG_knowledge() # import from RAG system TODO：接入RAG
-    knowledge = test_knowledge
 
-    prompt = build_prompt(knowledge=knowledge, user_instruction=user_instruction, type_instruction=type_instruction, difficulty=difficulty)
+
+    prompt = build_prompt(type_instruction=type_instruction, subject="高等数学", difficulty="中等", )
     # print("Prompt:", prompt)  # 调试用
 
     model_output = call_qwen_model(prompt)
