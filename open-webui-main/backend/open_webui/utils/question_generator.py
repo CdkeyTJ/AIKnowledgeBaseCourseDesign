@@ -35,7 +35,8 @@ test_json = {
     ]
 }
 
-def build_prompt(subject, difficulty, type_instruction=""):
+
+def build_prompt(knowledge, type_instruction="", difficulty=""):
     # 获取当前脚本的绝对路径
     script_dir = os.path.dirname(os.path.abspath(__file__))
 
@@ -51,7 +52,13 @@ def build_prompt(subject, difficulty, type_instruction=""):
             # 随机选择题目类型
             types = ["单选题", "多选题", "判断题"]
             type_instruction = random.choice(types)
-        return template.format(subject=subject, difficulty=difficulty, type_instruction=type_instruction)
+        if not difficulty:
+            # 随机选择题目难度
+            hardness = ["简单", "普通", "易混", "困难"]
+            # 对应的概率（权重），顺序对应
+            weights = [0.25, 0.4, 0.25, 0.1]
+            difficulty = random.choice(hardness, weights=weights, k=1)[0]
+        return template.format(knowledge, type_instruction=type_instruction, difficulty=difficulty)
     except FileNotFoundError:
         raise FileNotFoundError(f"找不到提示文件: {prompt_path}")
     except KeyError as e:
@@ -104,6 +111,7 @@ def fix_json_escapes(text):
         text = text.replace(key, original)
 
     return text
+
 
 def preprocess_json_text(text):
     """
@@ -184,14 +192,14 @@ def parse_model_output(output):
     return None
 
 
-def generate_question(subject="数学", difficulty="中等", type_instruction=""):
+def generate_question(type_instruction="", subject="数学", difficulty="中等", ):
     """
     生成题目主函数
     返回: 题目列表（list of questions）返回标准格式：{ "questions": [...] }
     """
 
 
-    prompt = build_prompt(subject="高等数学", difficulty="中等", type_instruction=type_instruction)
+    prompt = build_prompt(type_instruction=type_instruction, subject="高等数学", difficulty="中等", )
     # print("Prompt:", prompt)  # 调试用
 
     model_output = call_qwen_model(prompt)

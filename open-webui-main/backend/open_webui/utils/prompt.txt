@@ -5,7 +5,7 @@
 
 ！！！请注意，这里是用户请求和总体要求
 
-现在请生成一道 {difficulty} 难度的 {subject} 题目，类型为{type_instruction}
+现在请生成一道 {difficulty} 难度的{type_instruction}
 用户指令：{user_instruction}
 只返回一个 JSON 对象，不要解释，不要代码块，不要示例。
 
