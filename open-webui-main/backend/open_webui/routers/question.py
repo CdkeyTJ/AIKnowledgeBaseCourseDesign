@@ -1,7 +1,6 @@
 # edited & created by @CDK
 # 添加API路由
 from fastapi import APIRouter, Request
-#from open_webui.utils.question_generator import generate_question
 from open_webui.utils.question_generator import generate_question
 
 router = APIRouter()
