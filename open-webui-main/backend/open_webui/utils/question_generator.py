@@ -110,8 +110,9 @@ def build_prompt(knowledge, user_instruction, type_instruction="", difficulty=""
             types = ["单选题", "多选题", "判断题"]
             type_instruction = random.choice(types)
         if not difficulty:
-            # 随机选择题目难度和概率
+            # 随机选择题目难度
             hardness = ["简单", "普通", "易混", "困难"]
+            # 对应的概率（权重），顺序对应
             weights = [0.25, 0.4, 0.25, 0.1]
 
             difficulty = random.choices(hardness, weights=weights, k=1)[0]
@@ -128,11 +129,10 @@ def call_qwen_model(prompt):
     # 假设本地 Ollama/LMDeploy/其他服务已启动，端口和API需根据实际情况调整
     url = "http://localhost:11434/api/generate"
     payload = {
-        "model": "qwen2.5:7b", # TODO：用户可更改模型
+        "model": "qwen2.5:3b",
         "prompt": prompt,
         "stream": False
     }
-
     try:
         response = requests.post(url, json=payload)
         response.raise_for_status()
