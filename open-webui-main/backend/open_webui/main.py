@@ -1523,9 +1523,10 @@ async def list_tasks_by_chat_id_endpoint(
 # @CDK: 添加generate-question post方法
 @app.post("/api/generate-question")
 async def generate_question_api(request: Request):
+    print("route")
     data = await request.json()
     prompt = data.get("prompt")
-    result = generate_question(prompt)
+    result = generate_question(request, prompt)
     return result
 
 ##################################
