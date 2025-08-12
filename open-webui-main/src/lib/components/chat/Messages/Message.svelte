@@ -1,4 +1,6 @@
 <script lang="ts">
+// TODO：之前的组件是加在这里的，可以写在报告中
+
 	import { toast } from 'svelte-sonner';
 
 	import { tick, getContext, onMount, createEventDispatcher } from 'svelte';
@@ -41,6 +43,18 @@
 	export let addMessages;
 	export let triggerScroll;
 	export let readOnly = false;
+
+	$: if (history?.messages?.[messageId]) {
+		let msg = history.messages[messageId];
+		if (typeof msg.content === 'string' && msg.content.trim().startsWith('{')) {
+			try {
+			history.messages[messageId].content = JSON.parse(msg.content);
+			} catch {}
+		}
+	}
+
+	const message = history?.messages?.[messageId] ?? null;
+
 </script>
 
 <div

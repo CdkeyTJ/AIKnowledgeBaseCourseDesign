@@ -81,6 +81,7 @@ from open_webui.routers import (
     models,
     knowledge,
     prompts,
+    question, # @CDK: 添加 question 路由
     evaluations,
     tools,
     users,
@@ -451,6 +452,7 @@ from open_webui.utils.plugin import install_tool_and_function_dependencies
 from open_webui.utils.oauth import OAuthManager
 from open_webui.utils.security_headers import SecurityHeadersMiddleware
 from open_webui.utils.redis import get_redis_connection
+from open_webui.utils.question_generator import generate_question # @CDK: 添加方法引用
 
 from open_webui.tasks import (
     redis_task_command_listener,
@@ -1199,6 +1201,7 @@ app.include_router(notes.router, prefix="/api/v1/notes", tags=["notes"])
 app.include_router(models.router, prefix="/api/v1/models", tags=["models"])
 app.include_router(knowledge.router, prefix="/api/v1/knowledge", tags=["knowledge"])
 app.include_router(prompts.router, prefix="/api/v1/prompts", tags=["prompts"])
+app.include_router(question.router, prefix="/api/v1/question", tags=["question"]) # @CDK:添加 question 路由
 app.include_router(tools.router, prefix="/api/v1/tools", tags=["tools"])
 
 app.include_router(memories.router, prefix="/api/v1/memories", tags=["memories"])
@@ -1210,7 +1213,6 @@ app.include_router(
     evaluations.router, prefix="/api/v1/evaluations", tags=["evaluations"]
 )
 app.include_router(utils.router, prefix="/api/v1/utils", tags=["utils"])
-
 
 try:
     audit_level = AuditLevel(AUDIT_LOG_LEVEL)
@@ -1518,6 +1520,14 @@ async def list_tasks_by_chat_id_endpoint(
     log.debug(f"Task IDs for chat {chat_id}: {task_ids}")
     return {"task_ids": task_ids}
 
+# @CDK: 添加generate-question post方法
+@app.post("/api/generate-question")
+async def generate_question_api(request: Request):
+    print("route")
+    data = await request.json()
+    prompt = data.get("prompt")
+    result = generate_question(request, prompt)
+    return result
 
 ##################################
 #

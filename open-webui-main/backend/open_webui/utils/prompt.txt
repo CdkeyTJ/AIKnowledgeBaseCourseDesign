@@ -1,0 +1,73 @@
+# edited & created by CDK
+# 用作 prompt 模板存放，便于后续维护和修改
+
+
+
+！！！请注意，这里是用户请求和总体要求
+
+现在请生成一道 {difficulty} 难度的{type_instruction}
+用户指令：{user_instruction}
+只返回一个 JSON 对象，不要解释，不要代码块，不要示例。
+
+对于单选题或多选题，所有的选项都应该被列在 "options" 字段下，而问题描述中不应包含任何选项信息。
+
+
+
+！！您需要参考的知识：
+{knowledge}
+
+
+
+！以下是您需要遵守的输出规范说明
+
+返回格式必须是：
+{{
+    "type": "choice_question",   // 或 "multiple_choice_question" 或 "true_false_question"
+    "question": "...",           // 只包含问题描述，不包含选项
+    "options": [...],            // 单选/多选需要，判断题需删除该字段
+    "answer": 0,                 // 单选/多选：选项对应数字（多选则需要数字列表，如[0]）；判断：true/false
+    "explanation": "..."         // 对答案以及对易混选项进行解释
+}}
+
+其中:
+    单选题要求：
+    "answer": 选项对应数字（如'0'代表'A'）
+
+    多选题要求：
+    "answer": 选项对应的数字列表（如选AB则是[0,1]）
+
+    判断题要求：
+    "answer": true/false ← 必须小写，不能用 True/False
+
+每次请求都应随机选择上述三种题型之一进行生成。
+问题描述("question")字段中不应包含任何选项信息，所有选项都应列在 "options" 字段下。
+
+
+
+！以下是各题型示例（仅作为参考，实际生成时请遵循题型要求和json格式）：
+
+    单选题格式示例：
+    {{
+        "type": "choice_question",
+        "question": "下面哪一项属于AI模型训练的方法？",
+        "options": ["监督学习", "编译器优化", "网络爬虫", "数据库事务", "嵌入式系统"],
+        "answer": 0,
+        "explanation": "监督学习是一种使用带标签数据进行训练的AI方法。"
+    }}
+
+    多选题格式示例：
+    {{
+        "type": "multiple_choice_question",
+        "question": "下列哪些分子是组成细胞膜的主要成分？",
+        "options": ["磷脂", "DNA", "胆固醇", "蛋白质", "葡萄糖"],
+        "answer": [0, 2, 3],
+        "explanation": "细胞膜的主要成分包括磷脂双分子层、膜蛋白，以及一定量的胆固醇，起到结构稳定和流动性调节作用。"
+    }}
+
+    判断题格式示例：
+    {{
+        "type": "true_false_question",
+        "question": "伽罗瓦是美国数学家",
+        "answer": false,
+        "explanation": "伽罗瓦是法国天才数学家，但是英年早逝。"
+    }}

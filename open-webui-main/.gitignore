@@ -170,7 +170,27 @@ cython_debug/
 #  be found at https://github.com/github/gitignore/blob/main/Global/JetBrains.gitignore
 #  and can be added to the global gitignore or merged into this file.  For a more nuclear
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
+# 忽略所有IDEA特定的配置文件和目录
 .idea/
+*.iws
+*.iml
+*.ipr
+
+# 忽略编译输出目录，默认为out/production/项目名 或 out/test/项目名 在Java项目中
+/out/
+
+# 忽略Maven和Gradle的本地仓库目录（如果你使用这些构建工具）
+.mvn/
+.gradle/
+
+# 忽略临时文件
+*~
+
+# 忽略操作系统生成的文件
+.DS_Store
+Thumbs.db
+
+# end of idea ignore
 
 # Logs
 logs
