@@ -250,11 +250,13 @@ async def query_knowledge_base(
         raise HTTPException(status_code=500, detail=f"检索失败: {str(e)}")
 
 # 供内部调用的检索函数（给question_generator使用）
-def retrieve_knowledge(kb_id: str, question: str, top_k: int = 3) -> str:
-    for user_id in user_kbs:
-        if kb_id in user_kbs[user_id]:
-            vector_key = f"{user_id}_{kb_id}"
-            if vector_key in vector_stores:
-                docs = vector_stores[vector_key].similarity_search(question, k=top_k)
-                return "\n\n".join([doc.page_content for doc in docs])
+def retrieve_knowledge(kb_id: str, question: str, top_k: int = 3, user_id: str = None) -> str:
+    # 严格 新增用户认证校验
+    if not user_id or user_id not in user_kbs or kb_id not in user_kbs[user_id]:
+        return ""  # 无权限或知识库不存在时返回空
+    
+    vector_key = f"{user_id}_{kb_id}"
+    if vector_key in vector_stores:
+        docs = vector_stores[vector_key].similarity_search(question, k=top_k)
+        return "\n\n".join([doc.page_content for doc in docs])
     return ""
