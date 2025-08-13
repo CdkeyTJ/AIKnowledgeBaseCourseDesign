@@ -3,6 +3,12 @@
 backend分支暂停使用
 2025/8/10 21：05
 
+目前本地的main好像和repo的main有很大冲突
+
+即恢复使用backend分支
+
+如有更改则提交PR给main合并
+
 [TOC]
 
 ## test（Future）

@@ -22,3 +22,5 @@
 Thumbs.db
 
 # change test
+gen/
+build/
