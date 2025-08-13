@@ -1382,7 +1382,7 @@
 		// TODO：这里替换成实际调用你的题库API或后端接口逻辑：@CDK: 实现
 		try {
 			// 调用后端API生成题目
-			const result = await generateQuestion('', prompt, '中等');
+			const result = await generateQuestion('', prompt);
 
 			// 如果后端返回的是数组格式，直接返回
 			if (Array.isArray(result)) {

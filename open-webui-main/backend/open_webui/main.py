@@ -1525,8 +1525,8 @@ async def list_tasks_by_chat_id_endpoint(
 async def generate_question_api(request: Request):
     print("route")
     data = await request.json()
-    prompt = data.get("prompt")
-    result = generate_question(request, prompt)
+    result = generate_question(data)
+    # print(result)
     return result
 
 ##################################

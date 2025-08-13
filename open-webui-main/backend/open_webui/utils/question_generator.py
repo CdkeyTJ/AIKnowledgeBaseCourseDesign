@@ -1,4 +1,4 @@
-# edited & created by CDK
+# edited & created by @CDK
 # 封装选择题生成逻辑（包括 prompt 构建和大模型调用）
 # - 设计 prompt 模板
 # - 调用本地模型（如 Ollama，使用 `requests.post`）
@@ -6,35 +6,41 @@
 
 import requests
 import os
+import re
 import random
 from fastapi import Request
+from open_webui.utils.parseUserInput import parse_input_demand
 from open_webui.utils.parseModelOutput import parse_model_output
 # from open_webui.utils.getUserModel import ...
 
-test_json = {
-    "questions": [
-        {
-            "type": "choice_question",
-            "question": "1+1=？（出现此问题则说明模型回答解析失败）",
-            "options": ["A. 0", "B. 1", "C. 2", "D. 3"],
-            "answer": 2,
-            "explanation": "1+1=2"
-        }
-        ## 目前看来前端不支持多个问题解析，遂定义为逐问题生成
-        # ,
-        # {
-        #     "type": "choice_question",
-        #     "question": "光合作用只能在有阳光的白天进行，夜晚无法进行。",
-        #     "options": ["A. ture", "B. false"],
-        #     "answer": 1,
-        #     "explanation": "光合作用分为两个阶段——光反应和暗反应（卡尔文循环）："
-        #                    "光反应需要光能，确实只能在白天进行，其作用是将光能转化为化学能（ATP和NADPH），并释放氧气。"
-        #                    "暗反应不需要光，但需要光反应提供的ATP和NADPH。"
-        #                    "因此，只要植物体内储存了足够的ATP和NADPH（例如白天积累的），暗反应在夜晚仍可短暂进行。"
-        #                    "不过，由于夜晚无法补充能量，光合作用整体会逐渐停止。"
-        # }
-    ]
+test_json = '''{
+     "questions":{
+        type: "question",
+        questions: [
+            {
+                "type": "choice_question",
+                "question": "1+1=？（出现此问题则说明模型回答解析失败）",
+                "options": ["A. 0", "B. 1", "C. 2", "D. 3"],
+                "answer": 2,
+                "explanation": "1+1=2"
+            }
+            ## 目前看来前端不支持多个问题解析，遂定义为逐问题生成
+            ,
+            {
+                "type": "choice_question",
+                "question": "光合作用只能在有阳光的白天进行，夜晚无法进行。",
+                "options": ["A. ture", "B. false"],
+                "answer": 1,
+                "explanation": "光合作用分为两个阶段——光反应和暗反应（卡尔文循环）："
+                               "光反应需要光能，确实只能在白天进行，其作用是将光能转化为化学能（ATP和NADPH），并释放氧气。"
+                               "暗反应不需要光，但需要光反应提供的ATP和NADPH。"
+                               "因此，只要植物体内储存了足够的ATP和NADPH（例如白天积累的），暗反应在夜晚仍可短暂进行。"
+                               "不过，由于夜晚无法补充能量，光合作用整体会逐渐停止。"
+            }
+        ]
+     }
 }
+'''
 
 test_knowledge = """
 https://zh.wikipedia.org/wiki/%E6%A0%B8%E9%85%B8#
@@ -92,30 +98,34 @@ https://zh.wikipedia.org/wiki/%E6%A0%B8%E9%85%B8#
 核苷是由含氮碱基和戊糖组成的糖苷[5]。核苷加上一个磷酸基就是核苷酸。
 """
 
-def build_prompt(knowledge, user_instruction, type_instruction="", difficulty=""):
+def build_prompt(request_data):
     # 获取当前脚本的绝对路径
     script_dir = os.path.dirname(os.path.abspath(__file__))
-
     # 构建 prompt.txt 的绝对路径
     prompt_path = os.path.join(script_dir, 'prompt.txt')
+
+    # 获取相关参数
+    difficulty, NumberOfQuestions, user_instruction = parse_input_demand(request_data)
+    knowledge = test_knowledge
+    # knowledge = RAG_knowledge() # import from RAG system TODO：接入RAG
 
     try:
         # 打开并读取模板文件
         with open(prompt_path, 'r', encoding='utf-8') as f:
             template = f.read()
 
-        if not type_instruction:
-            # 随机选择题目类型
-            types = ["单选题", "多选题", "判断题"]
-            type_instruction = random.choice(types)
-        if not difficulty:
-            # 随机选择题目难度
-            hardness = ["简单", "普通", "易混", "困难"]
-            # 对应的概率（权重），顺序对应
-            weights = [0.25, 0.4, 0.25, 0.1]
+        single_num = NumberOfQuestions["single_num"]
+        multi_num = NumberOfQuestions["multi_num"]
+        truefalse_num = NumberOfQuestions["truefalse_num"]
 
-            difficulty = random.choices(hardness, weights=weights, k=1)[0]
-        return template.format(knowledge=knowledge, user_instruction=user_instruction, type_instruction=type_instruction, difficulty=difficulty)
+        return template.format(
+            knowledge=knowledge,
+            difficulty = difficulty,
+            user_instruction = user_instruction,
+            single_num=single_num,
+            multi_num=multi_num,
+            truefalse_num=truefalse_num
+        )
     except FileNotFoundError:
         raise FileNotFoundError(f"找不到提示文件: {prompt_path}")
     except KeyError as e:
@@ -127,7 +137,7 @@ def call_qwen_model(prompt):
     # 假设本地 Ollama/LMDeploy/其他服务已启动，端口和API需根据实际情况调整
     url = "http://localhost:11434/api/generate"
     payload = {
-        "model": "qwen2.5:3b", # TODO：用户可更改模型
+        "model": "qwen2.5:7b",
         "prompt": prompt,
         "stream": False
     }
@@ -140,37 +150,131 @@ def call_qwen_model(prompt):
         print(f"调用模型失败: {e}")
         return ""
 
+def is_valid_question_format(data):
+    """
+    判断输入数据是否符合最新标准题目 JSON 格式：
+    {
+        "questions": {
+            "type": "question",
+            "questions": [ ... ]
+        }
+    }
+    且每个 question 都符合规范。
+    """
+    if not isinstance(data, dict):
+        print("❌ 根对象不是字典类型")
+        return False
+
+    if "questions" not in data:
+        print("❌ 缺少顶层 'questions' 字段")
+        return False
+
+    inner = data["questions"]
+    if not isinstance(inner, dict):
+        print(f"❌ 'questions' 字段应为字典类型，实际类型: {type(inner)}")
+        return False
+
+    # 验证内层对象：{ "type": "question", "questions": [...] }
+    if inner.get("type") != "question":
+        print(f"❌ 内层 type 应为 'question'，实际为: {inner.get('type')}")
+        return False
+
+    if "questions" not in inner:
+        print("❌ 内层缺少 'questions' 字段")
+        return False
+
+    questions = inner["questions"]
+    if not isinstance(questions, list):
+        print(f"❌ 内层 'questions' 字段应为列表，实际类型: {type(questions)}")
+        return False
+
+    if len(questions) == 0:
+        print("⚠️  内层 'questions' 列表为空")
+
+    # 验证每一个题目
+    for i, q in enumerate(questions):
+        if not isinstance(q, dict):
+            print(f"❌ 第 {i} 个题目不是字典类型")
+            return False
+
+        if "type" not in q:
+            print(f"❌ 第 {i} 个题目缺少 'type' 字段")
+            return False
+
+        q_type = q["type"]
+        valid_types = {"choice_question", "true_false_question", "multiple_choice_question"}
+        if q_type not in valid_types:
+            print(f"❌ 第 {i} 个题目 type 不合法: {q_type}")
+            return False
+
+        # 必须字段检查
+        required_fields = ["question", "answer", "explanation"]
+        for field in required_fields:
+            if field not in q:
+                print(f"❌ 第 {i} 个题目缺少字段: {field}")
+                return False
+            if not isinstance(q[field], (str, bool, list, int)):
+                print(f"❌ 第 {i} 个题目字段 '{field}' 类型异常: {type(q[field])}")
+                return False
+
+        # 根据类型检查 options 和 answer 格式
+        if q_type in ("choice_question", "multiple_choice_question"):
+            if "options" not in q or not isinstance(q["options"], list):
+                print(f"❌ 第 {i} 个题目（{q_type}）缺少或 options 不是列表")
+                return False
+            if len(q["options"]) == 0:
+                print(f"⚠️  第 {i} 个题目 options 为空列表")
+
+        # 检查 answer 类型
+        answer = q["answer"]
+        if q_type == "choice_question":
+            if not isinstance(answer, int):
+                print(f"❌ 第 {i} 个 choice_question 的 answer 应为整数，实际: {answer} ({type(answer)})")
+                return False
+        elif q_type == "true_false_question":
+            if not isinstance(answer, bool):
+                print(f"❌ 第 {i} 个 true_false_question 的 answer 应为布尔值，实际: {answer} ({type(answer)})")
+                return False
+        elif q_type == "multiple_choice_question":
+            if not isinstance(answer, list):
+                print(f"❌ 第 {i} 个 multiple_choice_question 的 answer 应为列表，实际: {answer} ({type(answer)})")
+                return False
+            if not all(isinstance(x, int) for x in answer):
+                print(f"❌ 第 {i} 个 multiple_choice_question 的 answer 列表中包含非整数")
+                return False
+
+        # 检查字符串字段是否为字符串
+        for field in ["question", "explanation"]:
+            if not isinstance(q[field], str):
+                print(f"❌ 第 {i} 个题目 {field} 字段应为字符串，实际类型: {type(q[field])}")
+                return False
+
+    print(f"✅ 数据格式正确！共 {len(questions)} 道题目。")
+    return True
+
 # 以后可能要添加用户Knowledge接口
-def generate_question(request: Request, user_instruction="", type_instruction="", difficulty=""):
+def generate_question(data):
     """
     生成题目主函数
     返回: 题目列表（list of questions）返回标准格式：{ "questions": [...] }
     """
     print("generating...")
     # return test_json
-    # knowledge = RAG_knowledge() # import from RAG system TODO：接入RAG
-    print("jfffffffffffffffffffffffffffffffffffffffffffffffeiowjfiowjefffffffffffffffffffffffffffffffffffff")
-    knowledge = test_knowledge
-    print(knowledge, user_instruction, type_instruction, difficulty)
 
-    prompt = build_prompt(knowledge=knowledge, user_instruction=user_instruction, type_instruction=type_instruction, difficulty=difficulty)
-    # print("Prompt:", prompt)  # 调试用
-
+    prompt = build_prompt(data)
+    # print("prompt: ",prompt)
     model_output = call_qwen_model(prompt)
     # model_output = await call_model_from_request(request, prompt) # 用于调用用户自定义模型版本，TODO：用户信息无法查询
-    print("Model Raw Output:", model_output)  # 调试用
+    print("Model Raw Output: ", model_output)  # 调试用
 
     result = parse_model_output(model_output)
+    # return model_output
     print("Parsed Result:", result)  # 调试用
 
-    # ✅如果解析结果是字典，并且包含 'questions' 字段
-    if isinstance(result, dict) and 'questions' in result and isinstance(result['questions'], list):
-        return result['questions']  # 直接返回，TODO：待允许返回多个问题时记得删除筛选
+    if is_valid_question_format(result):
+        return result
 
     # ❌ 解析失败，返回默认 test_json（完整结构）
     print("解析失败，返回默认题目")
     return test_json  # 返回完整字典，不是 test_json['questions']，前端需要我返回questions列表，即便只能渲染1个问题
-
-
-
 

@@ -1,19 +1,23 @@
-# edited & created by CDK
+# edited & created by @CDK
 # 用作 prompt 模板存放，便于后续维护和修改
 
 
 
 ！！！请注意，这里是用户请求和总体要求
 
-现在请生成一道 {difficulty} 难度的{type_instruction}
-用户指令：{user_instruction}
+现在请生成若干道 {difficulty} 难度的题目，需包含：
+{single_num}个单选题，{multi_num}个多选题，{truefalse_num}个判断题
+并且题目生成需要在提供的知识中有根据
 只返回一个 JSON 对象，不要解释，不要代码块，不要示例。
-
 对于单选题或多选题，所有的选项都应该被列在 "options" 字段下，而问题描述中不应包含任何选项信息。
+
+用户指令：{user_instruction}
+如果该prompt指令与用户指令冲突，以用户指令为准
 
 
 
 ！！您需要参考的知识：
+
 {knowledge}
 
 
@@ -22,12 +26,38 @@
 
 返回格式必须是：
 {{
-    "type": "choice_question",   // 或 "multiple_choice_question" 或 "true_false_question"
-    "question": "...",           // 只包含问题描述，不包含选项
-    "options": [...],            // 单选/多选需要，判断题需删除该字段
-    "answer": 0,                 // 单选/多选：选项对应数字（多选则需要数字列表，如[0]）；判断：true/false
-    "explanation": "..."         // 对答案以及对易混选项进行解释
+    "questions":{{
+        type: "question",
+        questions: [
+            // 单选题 * {single_num}
+            {{
+                "type": "choice_question",
+                "question": "...",           // 只包含问题描述，不包含选项
+                "options": [...],            // 单选/多选需要
+                "answer": ...,               // 单选：选项对应数字，如 1
+                "explanation": "..."         // 对答案以及对易混选项进行解释
+            }},
+
+            // 多选题 * {multi_num}
+            {{
+                "type": "multiple_choice_question",
+                "question": "...",           // 只包含问题描述，不包含选项
+                "options": [...],            // 多选需要
+                "answer": [...],             // 多选：选项对应数字，需要数字列表，如[0, 1]
+                "explanation": "..."         // 对答案以及对易混选项进行解释
+            }},
+
+            // 判断题 * {truefalse_num}
+            {{
+                "type": "true_false_question",
+                "question": "...",           // 只包含问题描述
+                "answer": true/false,        // 判断：true/false
+                "explanation": "..."         // 对答案以及对易混选项进行解释
+            }}
+        ]
+    }}
 }}
+
 
 其中:
     单选题要求：
@@ -39,7 +69,6 @@
     判断题要求：
     "answer": true/false ← 必须小写，不能用 True/False
 
-每次请求都应随机选择上述三种题型之一进行生成。
 问题描述("question")字段中不应包含任何选项信息，所有选项都应列在 "options" 字段下。
 
 
