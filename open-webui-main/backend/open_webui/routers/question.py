@@ -8,6 +8,7 @@ router = APIRouter()
 @router.post("/generate-question")
 async def generate_question_api(request: Request):
     data = await request.json()
+    
     # subject = data.get("subject", "默认学科")
     # difficulty = data.get("difficulty", "中等")
     # result = generate_question(subject, difficulty)

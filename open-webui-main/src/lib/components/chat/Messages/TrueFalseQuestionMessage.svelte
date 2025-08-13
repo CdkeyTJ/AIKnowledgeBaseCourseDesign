@@ -9,12 +9,12 @@
   const select = (value: boolean) => {
     if (readOnly || selected !== null) return;
     selected = value;
-    feedback = value === message.content.answer ? '✅ 判断正确' : '❌ 判断错误';
+    feedback = value === message.answer ? '✅ 判断正确' : '❌ 判断错误';
   };
 
-  const isCorrect = (v) => v === message.content.answer;
+  const isCorrect = (v) => v === message.answer;
   const isSelected = (v) => v === selected;
-</script>
+</script> 
 
 <style>
     .header {
@@ -52,7 +52,7 @@
 </div>
 
 <div class="bg-muted p-4 rounded-lg shadow w-full space-y-4">
-  <div class="text-base font-semibold text-foreground">{message.content.question}</div>
+  <div class="text-base font-semibold text-foreground">{message.question}</div>
 
   <div class="flex gap-4">
     <button
@@ -96,14 +96,14 @@
         {feedback}
       </div>
 
-      {#if selected !== message.content.answer}
+      {#if selected !== message.answer}
         <div class="text-neutral-700">
-          正确答案是：<strong>{message.content.answer ? '正确' : '错误'}</strong>
+          正确答案是：<strong>{message.answer ? '正确' : '错误'}</strong>
         </div>
       {/if}
 
-      {#if message.content.explanation}
-        <div class="mt-1 text-muted-foreground italic">{message.content.explanation}</div>
+      {#if message.explanation}
+        <div class="mt-1 text-muted-foreground italic">{message.explanation}</div>
       {/if}
     </div>
   {/if}

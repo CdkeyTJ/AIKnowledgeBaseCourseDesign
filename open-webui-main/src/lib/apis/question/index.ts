@@ -4,7 +4,7 @@ import { WEBUI_BASE_URL } from '$lib/constants';
 export const generateQuestion = async (
 	token: string = '',
 	prompt: string,
-	subject: string = '数学',
+	//subject: string = '数学',
 	difficulty: string = '简单'
 ) => {
 	let error = null;
@@ -18,11 +18,12 @@ export const generateQuestion = async (
 		},
 		body: JSON.stringify({
 			prompt: prompt,
-			subject: subject,
+			// subject: subject,
 			difficulty: difficulty
 		})
 	})
 		.then(async (res) => {
+			console.log(res)
 			if (!res.ok) throw await res.json();
 			return res.json();
 		})
@@ -38,5 +39,30 @@ export const generateQuestion = async (
 		throw error;
 	}
 
-	return res;
+	return {questions: {
+		type: 'question',
+questions: [
+      {
+        "type": "choice_question",
+        "question": "在Python中，用于处理日期和时间的标准库是哪一个？",
+        "options": ["random", "datetime", "time", "date"],
+        "answer": 1,
+        "explanation": "正确答案是 datetime 库。其他选项分别是 random（用于生成随机数）、time（主要用于处理当前时间）和 date（处理日期部分）库。"
+      },
+      {
+        "type": "true_false_question",
+        "question": "伽罗瓦是美国数学家",
+        "answer": false,
+        "explanation": "伽罗瓦是法国天才数学家，但他英年早逝。"
+      },
+      {
+		"type": "multiple_choice_question",
+		"question": "请选择0，2，3",
+		"options": ['磷脂', 'DNA', '胆固醇', '蛋白质', '葡萄糖'],
+        "answer": [0, 2, 3],
+        "explanation": "future0"
+      }
+    ]
+	}
+};
 };

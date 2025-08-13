@@ -127,7 +127,7 @@ def call_qwen_model(prompt):
     # 假设本地 Ollama/LMDeploy/其他服务已启动，端口和API需根据实际情况调整
     url = "http://localhost:11434/api/generate"
     payload = {
-        "model": "qwen2.5:7b", # TODO：用户可更改模型
+        "model": "qwen2.5:3b", # TODO：用户可更改模型
         "prompt": prompt,
         "stream": False
     }
@@ -255,7 +255,9 @@ def generate_question(user_instruction="", type_instruction="", difficulty=""):
     """
     # return test_json
     # knowledge = RAG_knowledge() # import from RAG system TODO：接入RAG
+    print("jfffffffffffffffffffffffffffffffffffffffffffffffeiowjfiowjefffffffffffffffffffffffffffffffffffff")
     knowledge = test_knowledge
+    print(knowledge, user_instruction, type_instruction, difficulty)
 
     prompt = build_prompt(knowledge=knowledge, user_instruction=user_instruction, type_instruction=type_instruction, difficulty=difficulty)
     # print("Prompt:", prompt)  # 调试用

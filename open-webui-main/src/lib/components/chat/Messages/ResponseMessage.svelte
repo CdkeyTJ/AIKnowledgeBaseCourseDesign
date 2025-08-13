@@ -45,6 +45,7 @@
 	import ChoiceQuestionMessage from './ChoiceQuestionMessage.svelte';
 	import TrueFalseQuestionMessage from './TrueFalseQuestionMessage.svelte';
 	import MultipleChoiceQuestionMessage from './MultipleChoiceQuestionMessage.svelte';
+	import QuestionDisplay from './QuestionDisplay.svelte';
 
 	import Error from './Error.svelte';
 	import Citations from './Citations.svelte';
@@ -798,12 +799,8 @@
 							<div class="w-full flex flex-col relative" id="response-content-container">
 								{#if message.content === '' && !message.error && (message?.statusHistory ?? [...(message?.status ? [message?.status] : [])]).length === 0}
 									<Skeleton />
-								{:else if message.content.type === 'choice_question'}
-									<ChoiceQuestionMessage {message} {readOnly} />
-								{:else if message.content.type === 'true_false_question'}
-									<TrueFalseQuestionMessage {message} {readOnly} />
-								{:else if message.content.type === 'multiple_choice_question'}
-									<MultipleChoiceQuestionMessage {message} {readOnly} />
+								{:else if message.content.type === 'question'}
+									<QuestionDisplay { message }/>
 								{:else if message.content && !message.content.type && message.error !== true}
 									<!-- always show message contents even if there's an error -->
 									<!-- unless message.error === true which is legacy error handling, where the error message is stored in message.content -->

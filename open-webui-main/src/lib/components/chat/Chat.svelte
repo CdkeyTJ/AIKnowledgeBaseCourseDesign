@@ -77,7 +77,7 @@
 		getTaskIdsByChatId
 	} from '$lib/apis';
 	import { getTools } from '$lib/apis/tools';
-	import { generateQuestion } from '$lib/apis/question'; //@CDK:添加方法 
+	import { generateQuestion } from '$lib/apis/question'; //@CDK:添加方法
 
 	import Banner from '../common/Banner.svelte';
 	import MessageInput from '$lib/components/chat/MessageInput.svelte';
@@ -1382,7 +1382,7 @@
 		// TODO：这里替换成实际调用你的题库API或后端接口逻辑：@CDK: 实现
 		try {
 			// 调用后端API生成题目
-			const result = await generateQuestion('', prompt, '数学', '中等');
+			const result = await generateQuestion('', prompt, '中等');
 
 			// 如果后端返回的是数组格式，直接返回
 			if (Array.isArray(result)) {
@@ -1395,28 +1395,33 @@
 			}
 
 			// 如果都没有，返回默认题目
-			return [
-				{
-					type: 'choice_question',
-					question: '下列哪项是编程语言？（出现此题目说明后端生成题目失败）',
-					options: ['HTML', 'CSS', 'JavaScript', 'HTTP'],
-					answer: 2,
-					explanation: 'JavaScript 是编程语言。'
-				}
-			];
-
+			return {
+				type: 'question',
+				questions: [
+					{
+						type: 'choice_question',
+						question: '下列哪项是编程语言？（出现此题目说明后端生成题目失败）',
+						options: ['HTML', 'CSS', 'JavaScript', 'HTTP'],
+						answer: 2,
+						explanation: 'JavaScript 是编程语言。'
+					}
+				]
+			};
 		} catch (error) {
 			console.error('生成题目失败:', error);
 			// 返回默认题目作为备选
-			return [
-				{
-					type: 'choice_question',
-					question: '下列哪项是编程语言？（出现此题目说明后端生成题目失败且前端遭遇错误）',
-					options: ['HTML', 'CSS', 'JavaScript', 'HTTP'],
-					answer: 2,
-					explanation: 'JavaScript 是编程语言。'
-				}
-			];
+			return {
+				type: 'question',
+				questions: [
+					{
+						type: 'choice_question',
+						question: '下列哪项是编程语言？（出现此题目说明后端生成题目失败且前端遭遇错误）',
+						options: ['HTML', 'CSS', 'JavaScript', 'HTTP'],
+						answer: 2,
+						explanation: 'JavaScript 是编程语言。'
+					}
+				]
+			};
 		}
 	}
 
@@ -1468,7 +1473,6 @@
 		// 	return;
 		// }
 		// // // // //
-
 
 		const messages = createMessagesList(history, history.currentId);
 		const _selectedModels = selectedModels.map((modelId) =>
@@ -1573,26 +1577,25 @@
 
 	// @CDK: TODO这里可以修改为正则，可以添加选择/多选/判断
 	function isGenerateQuestionPrompt(prompt: string): boolean {
-		return (/帮我(出|生成|做|写|制作).*题/.test(prompt))
+		return /帮我.*出.*题/.test(prompt) && /帮我.*出.*题/.test(prompt);
 	}
 
-	async function fetchGeneratedQuestion(prompt: string) {
-		try {
-			const response = await fetch("http://127.0.0.1:8080/api/v1/question/generate-question", {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ prompt })
-			});
-			if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-			const result = await response.json();
-			if (result.code === 0) return result.data;
-			else throw new Error(`API error: ${result.msg}`);
-		} catch (err) {
-			console.error("Failed to fetch question:", err);
-			return null;
-		}
-	}
-
+	// async function fetchGeneratedQuestion(prompt: string) {
+	// 	try {
+	// 		const response = await fetch("http://127.0.0.1:8080/api/v1/question/generate-question", {
+	// 		method: 'POST',
+	// 		headers: { 'Content-Type': 'application/json' },
+	// 		body: JSON.stringify({ prompt })
+	// 		});
+	// 		if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+	// 		const result = await response.json();
+	// 		if (result.code === 0) return result.data;
+	// 		else throw new Error(`API error: ${result.msg}`);
+	// 	} catch (err) {
+	// 		console.error("Failed to fetch question:", err);
+	// 		return null;
+	// 	}
+	// }
 
 	const sendPrompt = async (
 		_history,
@@ -1627,14 +1630,14 @@
 					childrenIds: [],
 					role: 'assistant',
 					done: false,
-					content: "",
+					content: '',
 					model: model.id,
 					modelName: model.name ?? model.id,
 					modelIdx: modelIdx ? modelIdx : _modelIdx,
 					timestamp: Math.floor(Date.now() / 1000) // Unix epoch
 				};
 
-				if(isGenerateQuestionPrompt(prompt)) {
+				if (isGenerateQuestionPrompt(prompt)) {
 					// responseMessage.content = {
 					// 	type: 'multiple_choice_question',
 					// 	question: '下列哪些分子是组成细胞膜的主要成分？',
@@ -1663,17 +1666,17 @@
 					// answer: 2,
 					// explanation: "非颤抖产热主要发生在棕色脂肪组织（BAT），其调控依赖于交感神经系统的激活，特别是去甲肾上腺素（norepinephrine, NE）的释放。NE通过激活β3-肾上腺素受体，启动脂肪酸氧化和解偶联蛋白1（UCP1）的表达，从而促进产热。因此，选项 C 是正确答案。\n\n其他选项分析：\n- A：甲状腺激素促进基础代谢率，其下降会减少而非增加产热。\n- B：迷走神经主要促进副交感活动，与非颤抖产热无直接关系。\n- D：胰岛素主要促进葡萄糖摄取，不是非颤抖产热的直接调控因子。\n- E：皮质醇在慢性应激中调节代谢，但不直接驱动棕色脂肪产热。"
 					// },
-					const questionData = await fetchGeneratedQuestion(prompt);
-					if (questionData) {
-						responseMessage.content = questionData;
-					} else {
-						responseMessage.content = {
-						type: "true_false_question",
-						question: "伽罗瓦是美国数学家",
-						answer: false,
-						explanation: "伽罗瓦是法国天才数学家，但是英年早逝。"
-						};
-					}
+					// const questionData = await fetchGeneratedQuestion(prompt);
+					// if (questionData) {
+					// 	responseMessage.content = questionData;
+					// } else {
+					// 	responseMessage.content = {
+					// 	type: "true_false_question",
+					// 	question: "伽罗瓦是美国数学家",
+					// 	answer: false,
+					// 	explanation: "伽罗瓦是法国天才数学家，但是英年早逝。"
+					// 	};
+					// }
 					// 	type: "choice_question",
 					// 	question: "下列哪种调控方式最可能导致哺乳动物在寒冷环境中非颤抖产热（non-shivering thermogenesis）增加？",
 					// 	options: [
@@ -1688,14 +1691,14 @@
 					// },
 
 					// responseMessage.content = await generateQuestionsFromPrompt(prompt)
-					const questions = await generateQuestionsFromPrompt(prompt); // 等待返回题目内容
-       				responseMessage.content = questions[0]; // 或者根据需要处理多个题目
-					
+					const results = await generateQuestionsFromPrompt(prompt); // 等待返回题目内容
+					responseMessage.content = results; // 或者根据需要处理多个题目
+
 					responseMessage.done = true;
 				} else {
-					responseMessage.content = "";
+					responseMessage.content = '';
 					responseMessage.done = false;
-				};
+				}
 
 				// Add message to history and Set currentId to messageId
 				history.messages[responseMessageId] = responseMessage;
@@ -1726,7 +1729,7 @@
 		// Save chat after all messages have been created
 		await saveChatHandler(_chatId, _history);
 
-		if(!isGenerateQuestionPrompt(prompt)){
+		if (!isGenerateQuestionPrompt(prompt)) {
 			await Promise.all(
 				selectedModelIds.map(async (modelId, _modelIdx) => {
 					console.log('modelId', modelId);
@@ -1836,10 +1839,12 @@
 			.filter((message) => {
 				// 如果是用户消息并且是“出题请求”，就跳过，不发给模型
 				if (
-				message.role === 'user' &&
-				typeof message.content === 'string' &&
-				isGenerateQuestionPrompt(message.content)
-				) {return false;}
+					message.role === 'user' &&
+					typeof message.content === 'string' &&
+					isGenerateQuestionPrompt(message.content)
+				) {
+					return false;
+				}
 				return true;
 			})
 			.map((message, idx, arr) => ({
@@ -1866,7 +1871,11 @@
 							content: message?.merged?.content ?? message.content
 						})
 			}))
-			.filter((message) => message?.role === 'user' || (typeof message?.content === 'string' && message?.content?.trim()));
+			.filter(
+				(message) =>
+					message?.role === 'user' ||
+					(typeof message?.content === 'string' && message?.content?.trim())
+			);
 
 		const res = await generateOpenAIChatCompletion(
 			localStorage.token,

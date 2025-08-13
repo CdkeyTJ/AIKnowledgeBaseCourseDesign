@@ -9,11 +9,11 @@
   const selectOption = (index: number) => {
     if (readOnly || selectedIndex !== null) return;
     selectedIndex = index;
-    const isCorrect = index === message.content.answer;
+    const isCorrect = index === message.answer;
     feedback = isCorrect ? '✅ 选择正确' : '❌ 选择错误';
   };
 
-  const isCorrect = (i) => i === message.content.answer;
+  const isCorrect = (i) => i === message.answer;
   const isSelected = (i) => i === selectedIndex;
 </script>
 
@@ -51,10 +51,10 @@
     单选题
   </div>
   <div class="bg-muted p-4 rounded-lg shadow w-full space-y-4">
-    <div class="text-base font-semibold text-foreground">{message.content.question}</div>
+    <div class="text-base font-semibold text-foreground">{message.question}</div>
 
     <div class="flex flex-col gap-2">
-      {#each message.content.options as option, i}
+      {#each message.options as option, i}
         <button
           class="choice-button px-4 py-2 text-left rounded-md border text-sm font-medium
             {selectedIndex !== null
@@ -78,14 +78,14 @@
           {feedback}
         </div>
         
-        {#if selectedIndex !== message.content.answer}
+        {#if selectedIndex !== message.answer}
           <div class="text-neutral-700">
-            正确答案是：<strong>{message.content.options[message.content.answer]}</strong>
+            正确答案是：<strong>{message.options[message.answer]}</strong>
           </div>
         {/if}
 
-        {#if message.content.explanation}
-          <div class="mt-1 text-muted-foreground italic">{message.content.explanation}</div>
+        {#if message.explanation}
+          <div class="mt-1 text-muted-foreground italic">{message.explanation}</div>
         {/if}
       </div>
     {/if}
