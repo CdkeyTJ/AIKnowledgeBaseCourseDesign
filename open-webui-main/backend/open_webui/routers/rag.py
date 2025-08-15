@@ -9,8 +9,8 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.document_loaders import PyPDFLoader, TextLoader
 from langchain.vectorstores import FAISS
 from langchain.embeddings import HuggingFaceEmbeddings
-from open_webui.utils.auth import get_current_active_user
-from open_webui.models.user import UserModel
+from open_webui.utils.auth import get_current_user
+from open_webui.models.users import UserModel
 
 router = APIRouter()
 
@@ -42,7 +42,7 @@ class QueryRequest(BaseModel):
 async def create_knowledge_base(
     request: Request,
     kb_data: KnowledgeBaseCreate,
-    current_user: Annotated[UserModel, Depends(get_current_active_user)]
+    current_user: Annotated[UserModel, Depends(get_current_user)]
 ):
     user_id = current_user.id
     kb_id = str(uuid.uuid4())
@@ -78,7 +78,7 @@ async def create_knowledge_base(
 
 @router.get("/knowledge-bases", response_model=Dict)
 async def get_knowledge_bases(
-    current_user: Annotated[UserModel, Depends(get_current_active_user)]
+    current_user: Annotated[UserModel, Depends(get_current_user)]
 ):
     user_id = current_user.id
     return {
@@ -89,7 +89,7 @@ async def get_knowledge_bases(
 @router.get("/knowledge-bases/{kb_id}", response_model=Dict)
 async def get_knowledge_base(
     kb_id: str,
-    current_user: Annotated[UserModel, Depends(get_current_active_user)]
+    current_user: Annotated[UserModel, Depends(get_current_user)]
 ):
     user_id = current_user.id
     if user_id not in user_kbs or kb_id not in user_kbs[user_id]:
@@ -103,9 +103,9 @@ async def get_knowledge_base(
 # 文档处理接口
 @router.post("/knowledge-bases/{kb_id}/documents", response_model=Dict)
 async def upload_document(
+    current_user: Annotated[UserModel, Depends(get_current_user)],
     kb_id: str,
     file: UploadFile = File(...),
-    current_user: Annotated[UserModel, Depends(get_current_active_user)]
 ):
     user_id = current_user.id
     vector_key = f"{user_id}_{kb_id}"
@@ -172,7 +172,7 @@ async def upload_document(
 @router.get("/knowledge-bases/{kb_id}/documents", response_model=Dict)
 async def get_documents(
     kb_id: str,
-    current_user: Annotated[UserModel, Depends(get_current_active_user)]
+    current_user: Annotated[UserModel, Depends(get_current_user)]
 ):
     user_id = current_user.id
     if user_id not in user_kbs or kb_id not in user_kbs[user_id]:
@@ -187,7 +187,7 @@ async def get_documents(
 async def delete_document(
     kb_id: str,
     doc_id: str,
-    current_user: Annotated[UserModel, Depends(get_current_active_user)]
+    current_user: Annotated[UserModel, Depends(get_current_user)]
 ):
     user_id = current_user.id
     if user_id not in user_kbs or kb_id not in user_kbs[user_id]:
@@ -218,7 +218,7 @@ async def delete_document(
 async def query_knowledge_base(
     kb_id: str,
     request: QueryRequest,
-    current_user: Annotated[UserModel, Depends(get_current_active_user)]
+    current_user: Annotated[UserModel, Depends(get_current_user)]
 ):
     user_id = current_user.id
     vector_key = f"{user_id}_{kb_id}"

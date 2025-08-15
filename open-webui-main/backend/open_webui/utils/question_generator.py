@@ -11,7 +11,7 @@ import random
 from fastapi import Request
 from open_webui.utils.parseUserInput import parse_input_demand
 from open_webui.utils.parseModelOutput import parse_model_output
-# from open_webui.utils.getUserModel import ...
+from open_webui.routers.rag import retrieve_knowledge
 
 test_json = '''{
      "questions":{
@@ -98,6 +98,78 @@ https://zh.wikipedia.org/wiki/%E6%A0%B8%E9%85%B8#
 核苷是由含氮碱基和戊糖组成的糖苷[5]。核苷加上一个磷酸基就是核苷酸。
 """
 
+# def get_current_active_user(token: str = Depends(oauth2_scheme)) -> UserModel:
+#     payload = decode_jwt(token)  # 解码 token
+#     user_id = payload.get("user_id")
+#     user = get_user_by_id(user_id)  # 从数据库查用户
+#     if not user.is_active:
+#         raise HTTPException(status_code=400, detail="用户未激活")
+#     return user
+
+# def query_knowledge_base(
+#         kb_id: str,
+#         question: str,
+#         user_token: str,  # 用于身份验证（Bearer Token）
+#         base_url: str = "http://localhost:8080"  # 根据你的部署地址修改
+# ) -> Optional[Dict[Any, Any]]:
+#     """
+#     调用 RAG 知识库接口获取上下文
+#     """
+#     url = f"{base_url}/plugins/rag-knowledge-base/{kb_id}/query"
+#
+#     headers = {
+#         "Authorization": f"Bearer {user_token}",
+#         "Content-Type": "application/json"
+#     }
+#
+#     payload = {
+#         "question": question,
+#         "top_k": 3  # 返回最相关的 3 个片段
+#     }
+#
+#     try:
+#         response = requests.post(url, headers=headers, json=payload, timeout=10)
+#         if response.status_code == 200:
+#             data = response.json()
+#             if data.get("status") == "success":
+#                 return data["data"]
+#         else:
+#             print(f"RAG 查询失败: {response.status_code}, {response.text}")
+#     except Exception as e:
+#         print(f"请求 RAG 服务出错: {e}")
+#
+#     return None
+#
+# def get_knowledge_base(data, difficulty, NumberOfQuestions):
+#     # 从输入数据中提取参数
+#     kb_id = data.get("kb_id")  # 知识库 ID
+#     user_token = data.get("user_token")  # 用户 Token（用于鉴权）
+#
+#
+#     num_questions = NumberOfQuestions["single_num"] + NumberOfQuestions["multi_num"] + NumberOfQuestions[
+#         "truefalse_num"]
+#     custom_topic = data.get("topic", "")  # 可选主题
+#
+#     if not kb_id or not user_token:
+#         print("❌ 缺少 kb_id 或 user_token")
+#         return test_json  # fallback
+#
+#     # Step 1: 查询 RAG 获取上下文
+#     query = f"请提供适合生成 {num_questions} 道 {difficulty} 难度题目的相关内容"
+#     if custom_topic:
+#         query = f"关于 '{custom_topic}' 的知识点，适合出题的内容"
+#
+#     rag_result = query_knowledge_base(kb_id, query, user_token)
+#
+#     if not rag_result or not rag_result.get("answer"):
+#         print("⚠️ 未从知识库检索到有效内容，尝试使用通用知识生成题目")
+#         # 可以 fallback 到通用 prompt 或返回默认题
+#         context = "请根据通用知识生成一些练习题。"
+#     else:
+#         context = rag_result["answer"]  # 拿到 RAG 返回的答案作为上下文
+#         # print("Retrieved context:", context)
+#     return context
+
 def build_prompt(request_data):
     # 获取当前脚本的绝对路径
     script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -107,8 +179,18 @@ def build_prompt(request_data):
     # 获取相关参数
     difficulty, NumberOfQuestions, user_instruction = parse_input_demand(request_data)
     knowledge = test_knowledge
-    # knowledge = RAG_knowledge() # import from RAG system TODO：接入RAG
+    try:
+        # 获取知识库ID（从请求参数中）
+        kb_id = request_data.get("kb_id")
+        user_instruction = request_data.get("prompt", "")
 
+        # 调用RAG检索获取相关知识
+        if kb_id:
+            knowledge = retrieve_knowledge(kb_id, user_instruction)
+    except Exception as e:
+        knowledge = test_knowledge
+        print(f"{e}")
+    # print(knowledge)
     try:
         # 打开并读取模板文件
         with open(prompt_path, 'r', encoding='utf-8') as f:

@@ -182,6 +182,10 @@ def parse_input_demand(request_data):
         weights = [0.25, 0.4, 0.25, 0.1]
         difficulty = random.choices(hardness, weights=weights, k=1)[0]
     NumberOfQuestions = extract_question_numbers(text)
+    if 0 == NumberOfQuestions["truefalse_num"] + NumberOfQuestions["single_num"] + NumberOfQuestions["multi_num"]:
+        NumberOfQuestions["single_num"] = 3
+        NumberOfQuestions["multi_num"] = 2
+        NumberOfQuestions["truefalse_num"] = 1
 
     return difficulty, NumberOfQuestions, text
 
@@ -196,7 +200,8 @@ if __name__ == "__main__":
         "generate one single choice",
         "please give me 4 judgment questions",
         "I want two 填空题 and 1 multiple choice",
-        "请出五题简答"
+        "请出五题简答",
+        "帮我出3道判断题"
     ]
 
     for case in test_cases:

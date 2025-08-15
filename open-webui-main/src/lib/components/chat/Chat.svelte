@@ -1577,7 +1577,46 @@
 
 	// @CDK: TODO这里可以修改为正则，可以添加选择/多选/判断
 	function isGenerateQuestionPrompt(prompt: string): boolean {
-		return /帮我.*出.*题/.test(prompt) && /帮我.*出.*题/.test(prompt);
+	  if (!prompt || typeof prompt !== 'string') return false;
+
+	  // 转为小写，便于统一处理中英文
+	  const text = prompt.trim().toLowerCase();
+
+	  // 中文关键词组合（支持多种说法）
+	  const chinesePatterns = [
+		/出.*?[道|条|个].*题/,
+		/生成.*题/,
+		/给.*我.*题/,
+		/做.*[套个][题卷]/,
+		/来.*?[道|条].*题/,
+		/帮忙.*出.*题/,
+		/出题/,
+		/搞.*题/,
+		/整.*题/
+	  ];
+
+	  // 英文关键词组合（常见表达）
+	  const englishPatterns = [
+		/generate.*question/i,
+		/create.*quiz/i,
+		/make.*question/i,
+		/give.*me.*question/i,
+		/ask.*question/i,
+		/produce.*question/i,
+		/design.*exercise/i,
+		/start.*quiz/i,
+		/question.*mode/i,
+		/test.*mode/i,
+		/practice.*mode/i
+	  ];
+
+	  // 检查是否匹配任意一个中文模式
+	  const matchesChinese = chinesePatterns.some(pattern => pattern.test(prompt));
+
+	  // 检查是否匹配任意一个英文模式
+	  const matchesEnglish = englishPatterns.some(pattern => pattern.test(text));
+
+	  return matchesChinese || matchesEnglish;
 	}
 
 	// async function fetchGeneratedQuestion(prompt: string) {

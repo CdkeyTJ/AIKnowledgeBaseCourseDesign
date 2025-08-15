@@ -4,6 +4,7 @@ import { WEBUI_BASE_URL } from '$lib/constants';
 export const generateQuestion = async (
 	token: string = '',
 	prompt: string,
+	kbId: string | null = null,  // 新增知识库ID参数
 ) => {
 	let error = null;
 
@@ -15,7 +16,8 @@ export const generateQuestion = async (
 			...(token && { Authorization: `Bearer ${token}` })
 		},
 		body: JSON.stringify({
-			prompt: prompt
+			prompt: prompt,
+			kb_id: kbId  // 传递知识库ID到后端
 		})
 	})
 		.then(async (res) => {
