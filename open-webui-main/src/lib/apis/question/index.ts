@@ -4,7 +4,7 @@ import { WEBUI_BASE_URL } from '$lib/constants';
 export const generateQuestion = async (
 	token: string = '',
 	prompt: string,
-    files: filesSubmit,
+    files: [],
 	//subject: string = '数学',
 	difficulty: string = '简单',
 	kbId: string | null = null,  // 新增知识库ID参数
