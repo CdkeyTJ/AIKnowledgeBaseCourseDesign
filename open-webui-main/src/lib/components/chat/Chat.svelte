@@ -129,6 +129,11 @@
 
 	let showCommands = false;
 
+    // TODO: Future在此处添加，用来记录文件列表的长度，防止向后端发送过多的文件
+    let old_length;
+    let new_length;
+    let filesSubmit= [];
+
 	let chat = null;
 	let tags = [];
 
@@ -1378,11 +1383,11 @@
 	//////////////////////////
 	// Chat functions
 	//////////////////////////
-	async function generateQuestionsFromPrompt(prompt) {
+	async function generateQuestionsFromPrompt(prompt, filesSubmit) {
 		// TODO：这里替换成实际调用你的题库API或后端接口逻辑：@CDK: 实现
 		try {
 			// 调用后端API生成题目
-			const result = await generateQuestion('', prompt, '中等');
+			const result = await generateQuestion('', prompt, filesSubmit, '中等');
 
 			// 如果后端返回的是数组格式，直接返回
 			if (Array.isArray(result)) {
@@ -1540,6 +1545,13 @@
 			(item, index, array) =>
 				array.findIndex((i) => JSON.stringify(i) === JSON.stringify(item)) === index
 		);
+        filesSubmit = [];
+        filesSubmit.push(..._files.filter((item) => ['doc', 'file', 'collection'].includes(item.type)));
+        filesSubmit = filesSubmit.filter(
+            // Remove duplicates
+            (item, index, array) =>
+                array.findIndex((i) => JSON.stringify(i) === JSON.stringify(item)) === index
+        );
 
 		files = [];
 		messageInput?.setText('');
@@ -1577,7 +1589,8 @@
 
 	// @CDK: TODO这里可以修改为正则，可以添加选择/多选/判断
 	function isGenerateQuestionPrompt(prompt: string): boolean {
-		return /帮我.*出.*题/.test(prompt) && /帮我.*出.*题/.test(prompt);
+        console.log("文件内容：", filesSubmit);
+        return /帮我.*出.*题/.test(prompt) && /帮我.*出.*题/.test(prompt);
 	}
 
 	// async function fetchGeneratedQuestion(prompt: string) {
@@ -1691,7 +1704,7 @@
 					// },
 
 					// responseMessage.content = await generateQuestionsFromPrompt(prompt)
-					const results = await generateQuestionsFromPrompt(prompt); // 等待返回题目内容
+					const results = await generateQuestionsFromPrompt(prompt, filesSubmit); // 等待返回题目内容
 					responseMessage.content = results; // 或者根据需要处理多个题目
 
 					responseMessage.done = true;

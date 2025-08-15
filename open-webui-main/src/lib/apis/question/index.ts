@@ -4,6 +4,7 @@ import { WEBUI_BASE_URL } from '$lib/constants';
 export const generateQuestion = async (
 	token: string = '',
 	prompt: string,
+    files: filesSubmit,
 	//subject: string = '数学',
 	difficulty: string = '简单'
 ) => {
@@ -18,6 +19,7 @@ export const generateQuestion = async (
 		},
 		body: JSON.stringify({
 			prompt: prompt,
+            files: files,
 			// subject: subject,
 			difficulty: difficulty
 		})
