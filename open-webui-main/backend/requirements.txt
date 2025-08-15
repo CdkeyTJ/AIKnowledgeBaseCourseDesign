@@ -144,3 +144,22 @@ opentelemetry-instrumentation-requests==0.53b1
 opentelemetry-instrumentation-logging==0.53b1
 opentelemetry-instrumentation-httpx==0.53b1
 opentelemetry-instrumentation-aiohttp-client==0.53b1
+
+# RAG
+langchain==0.1.20
+langchain-community==0.0.38
+langchain-core==0.1.52
+faiss-cpu==1.8.0
+pypdf==4.2.0
+python-docx==1.1.0
+python-multipart==0.0.9
+unstructured==0.12.6
+unstructured[docx]==0.12.6
+sentence-transformers==2.7.0
+
+# model
+requests==2.31.0
+ollama==0.1.8
+
+# else
+python-magic==0.4.27

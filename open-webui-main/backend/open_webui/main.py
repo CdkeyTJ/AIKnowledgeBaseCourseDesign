@@ -1520,13 +1520,16 @@ async def list_tasks_by_chat_id_endpoint(
     log.debug(f"Task IDs for chat {chat_id}: {task_ids}")
     return {"task_ids": task_ids}
 
-# @CDK: 添加generate-question post方法
+# @CDK: 添加generate-question post方法，扩展请求参数接收
 @app.post("/api/generate-question")
 async def generate_question_api(request: Request):
     print("route")
     data = await request.json()
-    prompt = data.get("prompt")
-    result = generate_question(request, prompt)
+    # @ZHR: 新增：接收知识库ID参数
+    if "kb_id" not in data:
+        data["kb_id"] = None  # 默认为空（使用默认DNA知识库）
+    result = generate_question(data)
+    # print(result)
     return result
 
 ##################################
