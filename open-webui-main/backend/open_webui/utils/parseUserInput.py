@@ -183,8 +183,8 @@ def parse_input_demand(request_data):
         difficulty = random.choices(hardness, weights=weights, k=1)[0]
     NumberOfQuestions = extract_question_numbers(text)
     if 0 == NumberOfQuestions["truefalse_num"] + NumberOfQuestions["single_num"] + NumberOfQuestions["multi_num"]:
-        NumberOfQuestions["single_num"] = 3
-        NumberOfQuestions["multi_num"] = 2
+        NumberOfQuestions["single_num"] = 1
+        NumberOfQuestions["multi_num"] = 1
         NumberOfQuestions["truefalse_num"] = 1
 
     return difficulty, NumberOfQuestions, text

@@ -1201,7 +1201,7 @@ app.include_router(notes.router, prefix="/api/v1/notes", tags=["notes"])
 app.include_router(models.router, prefix="/api/v1/models", tags=["models"])
 app.include_router(knowledge.router, prefix="/api/v1/knowledge", tags=["knowledge"])
 app.include_router(prompts.router, prefix="/api/v1/prompts", tags=["prompts"])
-app.include_router(question.router, prefix="/api/v1/question", tags=["question"]) # @CDK:添加 question 路由
+# app.include_router(question.router, prefix="/api/v1/question", tags=["question"]) # @CDK:添加 question 路由
 app.include_router(tools.router, prefix="/api/v1/tools", tags=["tools"])
 
 app.include_router(memories.router, prefix="/api/v1/memories", tags=["memories"])
@@ -1523,7 +1523,7 @@ async def list_tasks_by_chat_id_endpoint(
 # @CDK: 添加generate-question post方法，扩展请求参数接收
 @app.post("/api/generate-question")
 async def generate_question_api(request: Request):
-    print("route")
+    print("routing from main")
     data = await request.json()
     # @ZHR: 新增：接收知识库ID参数
     if "kb_id" not in data:
