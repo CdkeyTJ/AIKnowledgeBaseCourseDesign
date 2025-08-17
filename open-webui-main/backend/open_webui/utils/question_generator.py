@@ -180,17 +180,21 @@ def build_prompt(request_data):
     difficulty, NumberOfQuestions, user_instruction = parse_input_demand(request_data)
     knowledge = test_knowledge
     try:
-        # 获取知识库ID（从请求参数中）
+        # 获取知识库ID和用户ID（从请求参数中）
         kb_id = request_data.get("kb_id")
+        user_id = request_data.get("user_id")  # @CDK: 新增用户ID参数
         user_instruction = request_data.get("prompt", "")
 
         # 调用RAG检索获取相关知识
-        if kb_id:
-            knowledge = retrieve_knowledge(kb_id, user_instruction)
+        if kb_id and user_id:  # @CDK: 确保两个参数都存在
+            knowledge = retrieve_knowledge(kb_id, user_instruction, user_id=user_id)
+        elif kb_id:
+            print("⚠️ 缺少user_id，无法验证知识库权限")
+            knowledge = test_knowledge
     except Exception as e:
         knowledge = test_knowledge
         print(f"{e}")
-    # print(knowledge)
+    print(f"knowledge: {knowledge}")
     try:
         # 打开并读取模板文件
         with open(prompt_path, 'r', encoding='utf-8') as f:

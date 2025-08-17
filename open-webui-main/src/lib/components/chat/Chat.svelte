@@ -78,6 +78,7 @@
 	} from '$lib/apis';
 	import { getTools } from '$lib/apis/tools';
 	import { generateQuestion } from '$lib/apis/question'; //@CDK:添加方法
+	import { getUserKnowledgeBases } from '$lib/apis/rag'; //@CDK:添加RAG API
 
 	import Banner from '../common/Banner.svelte';
 	import MessageInput from '$lib/components/chat/MessageInput.svelte';
@@ -88,6 +89,7 @@
 	import Placeholder from './Placeholder.svelte';
 	import NotificationToast from '../NotificationToast.svelte';
 	import Spinner from '../common/Spinner.svelte';
+	import KnowledgeBaseManager from './KnowledgeBaseManager.svelte'; //@CDK:添加知识库管理组件
 	import { fade } from 'svelte/transition';
 
 	export let chatIdProp = '';
@@ -143,6 +145,36 @@
 	};
 
 	let taskIds = null;
+
+	// @CDK: 添加知识库相关状态
+    let userKnowledgeBases = [];
+    let selectedKbId = null;
+    let showKnowledgeBaseManager = false; //@CDK:添加知识库管理显示状态
+    
+    // @CDK: 获取用户知识库列表
+    const fetchUserKnowledgeBases = async () => {
+        try {
+            if (!localStorage.token) return;
+            
+            const response = await fetch(`${WEBUI_BASE_URL}/api/v1/rag/knowledge-bases`, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            if (response.ok) {
+                const data = await response.json();
+                userKnowledgeBases = data.data || [];
+                
+                // 如果有知识库，默认选择第一个
+                if (userKnowledgeBases.length > 0 && !selectedKbId) {
+                    selectedKbId = userKnowledgeBases[0].id;
+                }
+            }
+        } catch (error) {
+            console.error('获取知识库失败:', error);
+        }
+    };
 
 	// Chat Input
 	let prompt = '';
@@ -531,6 +563,9 @@
 		chatInput?.focus();
 
 		chats.subscribe(() => {});
+
+		// @CDK: 在组件挂载时获取知识库列表
+        await fetchUserKnowledgeBases();
 	});
 
 	onDestroy(() => {
@@ -1386,8 +1421,43 @@
 	async function generateQuestionsFromPrompt(prompt, filesSubmit) {
 		// TODO：这里替换成实际调用你的题库API或后端接口逻辑：@CDK: 实现
 		try {
-			// 调用后端API生成题目
-			const result = await generateQuestion('', prompt, filesSubmit, '中等');
+			console.log("Chat/generateQuestionsFromPrompt/enter")
+			
+			// @CDK: 获取有效的用户token
+			const userToken = localStorage.token;
+			console.log('Token状态检查:', {
+				hasToken: !!userToken,
+				tokenLength: userToken ? userToken.length : 0,
+				tokenPrefix: userToken ? userToken.substring(0, 20) + '...' : 'none'
+			});
+			
+			if (!userToken) {
+				console.error('用户未登录，无法生成题目');
+				// @CDK: 提示用户先登录
+				alert('请先登录后再使用题目生成功能');
+				throw new Error('用户未登录，请先登录');
+			}
+			
+			// @CDK: 验证token是否有效（可选）
+			try {
+				const response = await fetch(`${WEBUI_BASE_URL}/api/config`, {
+					headers: {
+						'Authorization': `Bearer ${userToken}`
+					}
+				});
+				if (!response.ok) {
+					console.error('Token无效或已过期');
+					alert('登录已过期，请重新登录');
+					throw new Error('Token无效或已过期');
+				}
+			} catch (tokenError) {
+				console.error('Token验证失败:', tokenError);
+				alert('登录验证失败，请重新登录');
+				throw new Error('Token验证失败');
+			}
+			
+			// 调用后端API生成题目，传递有效的token
+			const result = await generateQuestion(userToken, prompt, filesSubmit, selectedKbId);
 
 			// 如果后端返回的是数组格式，直接返回
 			if (Array.isArray(result)) {
@@ -1565,8 +1635,7 @@
 			role: 'user',
 			content: userPrompt,
 			files: _files.length > 0 ? _files : undefined,
-			timestamp: Math.floor(Date.now() / 1000), // Unix epoch
-			models: selectedModels
+			timestamp: Math.floor(Date.now() / 1000) // Unix epoch
 		};
 
 		// Add message to history and Set currentId to messageId
@@ -1696,14 +1765,14 @@
 					// 	answer: [0, 2, 3],
 					// 	explanation: '细胞膜的主要成分包括磷脂双分子层、膜蛋白，以及一定量的胆固醇，起到结构稳定和流动性调节作用。'
 					// },
-
+					//
 					// responseMessage.content = {
 					// 	type: "true_false_question",
 					// 	question: "伽罗瓦是美国数学家",
 					// 	answer: false,
 					// 	explanation: "伽罗瓦是法国天才数学家，但是英年早逝。"
 					// },
-
+					//
 					// responseMessage.content = {
 					// type: "choice_question",
 					// question: "下列哪种调控方式最可能导致哺乳动物在寒冷环境中非颤抖产热（non-shivering thermogenesis）增加？",
@@ -1742,6 +1811,7 @@
 					// },
 
 					// responseMessage.content = await generateQuestionsFromPrompt(prompt)
+					console.log("Chat/isGenerateQuestionPrompt/enter")
 					const results = await generateQuestionsFromPrompt(prompt, filesSubmit); // 等待返回题目内容
 					responseMessage.content = results; // 或者根据需要处理多个题目
 
@@ -1888,7 +1958,7 @@
 
 		messages = messages
 			.filter((message) => {
-				// 如果是用户消息并且是“出题请求”，就跳过，不发给模型
+				// 如果是用户消息并且是"出题请求"，就跳过，不发给模型
 				if (
 					message.role === 'user' &&
 					typeof message.content === 'string' &&
@@ -2288,6 +2358,20 @@
 			}
 		}
 	};
+
+	// @CDK: 知识库管理相关函数
+	const handleKnowledgeBaseSelected = (event: CustomEvent) => {
+		selectedKbId = event.detail.kbId;
+		console.log('选中的知识库ID:', selectedKbId);
+	};
+
+	const toggleKnowledgeBaseManager = () => {
+		showKnowledgeBaseManager = !showKnowledgeBaseManager;
+	};
+
+	const refreshKnowledgeBases = async () => {
+		await fetchUserKnowledgeBases();
+	};
 </script>
 
 <svelte:head>
@@ -2402,6 +2486,37 @@
 							</div>
 
 							<div class=" pb-2">
+								<!-- @CDK: 在MessageInput组件上方添加知识库选择器 -->
+								{#if userKnowledgeBases.length > 0}
+									<div class="flex items-center gap-2 mb-2 px-4">
+										<label class="text-sm text-gray-600 dark:text-gray-400">选择知识库:</label>
+										<select 
+											bind:value={selectedKbId}
+											class="px-3 py-1 border rounded-md text-sm bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
+										>
+											<option value={null}>使用默认知识库</option>
+											{#each userKnowledgeBases as kb}
+												<option value={kb.id}>{kb.name}</option>
+											{/each}
+										</select>
+										<button
+											on:click={toggleKnowledgeBaseManager}
+											class="px-3 py-1 text-sm bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
+										>
+											管理知识库
+										</button>
+									</div>
+								{:else}
+									<div class="flex items-center gap-2 mb-2 px-4">
+										<span class="text-sm text-gray-500 dark:text-gray-400">暂无知识库</span>
+										<button
+											on:click={toggleKnowledgeBaseManager}
+											class="px-3 py-1 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+										>
+											创建知识库
+										</button>
+									</div>
+								{/if}
 								<MessageInput
 									bind:this={messageInput}
 									{history}
@@ -2539,6 +2654,27 @@
 		<div class=" flex items-center justify-center h-full w-full">
 			<div class="m-auto">
 				<Spinner className="size-5" />
+			</div>
+		</div>
+	{/if}
+	
+	<!-- @CDK: 知识库管理组件 -->
+	{#if showKnowledgeBaseManager}
+		<div class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+			<div class="w-full max-w-6xl max-h-[90vh] overflow-auto">
+				<KnowledgeBaseManager
+					token={localStorage.token || ''}
+					bind:selectedKbId
+					on:kbSelected={handleKnowledgeBaseSelected}
+				/>
+				<div class="text-center mt-4">
+					<button
+						on:click={toggleKnowledgeBaseManager}
+						class="px-6 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
+					>
+						关闭
+					</button>
+				</div>
 			</div>
 		</div>
 	{/if}
