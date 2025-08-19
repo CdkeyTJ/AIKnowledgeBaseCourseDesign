@@ -481,32 +481,67 @@ def retrieve_knowledge(kb_id: str, question: str, top_k: int = 3, user_id: str =
             
     except Exception as e:
         print(f"⚠️ 检查向量存储状态时出错: {e}")
-    
+
     # @CDK: 优化检索策略 - 提取专业关键词
+    import jieba
+    import jieba.analyse
+    import re
+
     def extract_keywords(text):
-        """从问题中提取专业关键词，简化逻辑确保能提取到内容"""
+        """智能关键词提取：
+        1. 优先提取 #标签
+        2. 若无标签，使用 jieba 提取关键词（基于 TF-IDF）
+        3. 结合停用词过滤，支持广泛中文语义
+        """
         print(f"🔍 关键词提取调试:")
         print(f"  原始文本: '{text}'")
-        
-        # 简单的关键词提取：移除标点，保留有意义的词
-        import re
-        
-        # 移除标点符号，保留中文和英文
-        cleaned_text = re.sub(r'[^\w\s\u4e00-\u9fff]', ' ', text)
-        words = cleaned_text.split()
-        
-        # 过滤掉太短的词和纯数字，但保留更多词汇
-        keywords = [word for word in words if len(word) > 1 and not word.isdigit()]
-        
-        print(f"  提取的关键词: {keywords}")
-        
+
+        # === 阶段一：提取 #标签关键词 ===
+        print("  正在尝试提取 #标签...")
+        tag_pattern = r'#{1,}\s*([^#\s]+(?:\s[^#\s]+)*)'
+        matches = re.findall(tag_pattern, text)
+        keywords = [match.strip() for match in matches if match.strip()]
+
         if keywords:
             result = ' '.join(keywords)
-            print(f"  ✅ 最终关键词: '{result}'")
+            print(f"  ✅ 成功提取标签关键词: '{result}'")
             return result
-        else:
-            print(f"  ⚠️ 没有提取到关键词，使用原内容")
-            return text
+
+        print("  ⚠️ 未检测到标签，进入 jieba 智能关键词提取...")
+
+        # === 阶段二：使用 jieba 提取关键词（自动忽略停用词）===
+        # jieba.analyse 自动生成关键词，已内置常用停用词
+        # 可设置 topK=5（最多5个），allowPOS 指定保留哪些词性（如名词、动词等）
+
+        # 允许的词性：n=名词, nz=其他名词, v=动词, vn=动名词, eng=英文术语
+        allowed_pos = ('n', 'nz', 'v', 'vn', 'eng')
+
+        # 使用 TF-IDF 算法提取关键词，带词性过滤
+        keywords = jieba.analyse.extract_tags(
+            text,
+            topK=6,  # 最多返回6个关键词
+            withWeight=False,  # 不返回权重
+            allowPOS=allowed_pos  # 只保留指定词性的词
+        )
+
+        if keywords:
+            result = ' '.join(keywords)
+            print(f"  🌟 jieba 提取成功: '{result}'")
+            return result
+
+        print("  ⚠️ jieba 未提取到关键词，fallback 到基础清洗...")
+
+        # === 阶段三：基础 fallback（去标点 + 简单过滤）===
+        cleaned = re.sub(r'[^\w\s\u4e00-\u9fff]', ' ', text)
+        words = cleaned.split()
+        fallback = [
+            w for w in words
+            if len(w) > 1 and not w.isdigit()
+        ]
+
+        result = ' '.join(fallback) if fallback else "通用问题"
+        print(f"  🛑 使用兜底结果: '{result}'")
+        return result
     
     try:
         # 提取专业关键词
