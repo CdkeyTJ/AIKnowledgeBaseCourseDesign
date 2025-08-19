@@ -514,50 +514,53 @@ def retrieve_knowledge(kb_id: str, question: str, top_k: int = 3, user_id: str =
         print(f"原始问题: {question}")
         print(f"提取的关键词: {search_query}")
         
-        # 使用关键词进行检索 - 降低阈值，确保能检索到内容
+        # 使用关键词进行检索 - 增加检索数量并去重
         print(f"🔍 开始关键词检索: '{search_query}'")
         
-        # 先尝试无阈值检索，确保能返回结果
+        # 增加初始检索数量，后续再筛选
+        expanded_top_k = min(top_k * 3, 10)  # 最多获取10个结果
         docs = vector_store.similarity_search_with_score(
             search_query, 
-            k=top_k
+            k=expanded_top_k
         )
         
         print(f"关键词检索结果数量: {len(docs)}")
         
-        if docs:
+        # 如果获取结果不足，使用原问题再次检索补充
+        if len(docs) < top_k:
+            print(f"🔄 结果不足，使用原问题补充检索: '{question}'")
+            additional_docs = vector_store.similarity_search_with_score(
+                question, 
+                k=top_k - len(docs)
+            )
+            docs.extend(additional_docs)
+        
+        # 去重处理
+        seen_content = set()
+        unique_docs = []
+        for doc, score in docs:
+            # 基于内容前200字符去重
+            content_hash = hash(doc.page_content[:200])
+            if content_hash not in seen_content:
+                seen_content.add(content_hash)
+                unique_docs.append((doc, score))
+        
+        # 按相似度排序并截取所需数量
+        unique_docs.sort(key=lambda x: x[1])  # 分数越低越相似
+        final_docs = unique_docs[:top_k]
+        
+        print(f"去重后最终结果数量: {len(final_docs)}")
+        
+        if final_docs:
             # 显示检索到的文档内容和相似度分数
             print("📄 检索到的文档内容片段:")
-            for i, (doc, score) in enumerate(docs):
-                content_preview = doc.page_content[:100] + "..." if len(doc.page_content) > 100 else doc.page_content
-                print(f"  文档{i+1} (相似度: {score:.3f}): {content_preview}")
-            
-            # 返回所有检索结果，不过滤相似度
-            content = "\n\n".join([doc.page_content for doc, _ in docs])
-            print(f"✅ 检索成功，内容长度: {len(content)}")
-            return content
-        else:
-            print("❌ 关键词检索未找到相关文档")
-            
-        # 如果关键词检索失败，尝试使用原问题检索
-        print(f"🔄 尝试使用原问题检索: '{question}'")
-        docs_with_score = vector_store.similarity_search_with_score(
-            question, 
-            k=top_k
-        )
-        
-        print(f"原问题检索结果数量: {len(docs_with_score)}")
-        
-        if docs_with_score:
-            # 显示检索到的文档内容和相似度分数
-            print("📄 原问题检索到的文档内容片段:")
-            for i, (doc, score) in enumerate(docs_with_score):
+            for i, (doc, score) in enumerate(final_docs):
                 content_preview = doc.page_content[:100] + "..." if len(doc.page_content) > 100 else doc.page_content
                 print(f"  文档{i+1} (相似度: {score:.3f}): {content_preview}")
             
             # 返回所有检索结果
-            content = "\n\n".join([doc.page_content for doc, _ in docs_with_score])
-            print(f"✅ 原问题检索成功，内容长度: {len(content)}")
+            content = "\n\n".join([doc.page_content for doc, _ in final_docs])
+            print(f"✅ 检索成功，内容长度: {len(content)}")
             return content
         
         print("❌ 所有检索方法都失败")
