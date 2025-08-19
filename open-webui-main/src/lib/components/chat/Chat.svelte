@@ -55,41 +55,43 @@
         removeAllDetails
     } from '$lib/utils';
 
-    import {generateChatCompletion} from '$lib/apis/ollama';
-    import {
-        createNewChat,
-        getAllTags,
-        getChatById,
-        getChatList,
-        getTagsById,
-        updateChatById
-    } from '$lib/apis/chats';
-    import {generateOpenAIChatCompletion} from '$lib/apis/openai';
-    import {processWeb, processWebSearch, processYoutubeVideo} from '$lib/apis/retrieval';
-    import {createOpenAITextStream} from '$lib/apis/streaming';
-    import {queryMemory} from '$lib/apis/memories';
-    import {getAndUpdateUserLocation, getUserSettings} from '$lib/apis/users';
-    import {
-        chatCompleted,
-        generateQueries,
-        chatAction,
-        generateMoACompletion,
-        stopTask,
-        getTaskIdsByChatId
-    } from '$lib/apis';
-    import {getTools} from '$lib/apis/tools';
-    import {generateQuestion} from '$lib/apis/question'; //@CDK:添加方法
+	import { generateChatCompletion } from '$lib/apis/ollama';
+	import {
+		createNewChat,
+		getAllTags,
+		getChatById,
+		getChatList,
+		getTagsById,
+		updateChatById
+	} from '$lib/apis/chats';
+	import { generateOpenAIChatCompletion } from '$lib/apis/openai';
+	import { processWeb, processWebSearch, processYoutubeVideo } from '$lib/apis/retrieval';
+	import { createOpenAITextStream } from '$lib/apis/streaming';
+	import { queryMemory } from '$lib/apis/memories';
+	import { getAndUpdateUserLocation, getUserSettings } from '$lib/apis/users';
+	import {
+		chatCompleted,
+		generateQueries,
+		chatAction,
+		generateMoACompletion,
+		stopTask,
+		getTaskIdsByChatId
+	} from '$lib/apis';
+	import { getTools } from '$lib/apis/tools';
+	import { generateQuestion } from '$lib/apis/question'; //@CDK:添加方法
+	import { getUserKnowledgeBases } from '$lib/apis/rag'; //@CDK:添加RAG API
 
-    import Banner from '../common/Banner.svelte';
-    import MessageInput from '$lib/components/chat/MessageInput.svelte';
-    import Messages from '$lib/components/chat/Messages.svelte';
-    import Navbar from '$lib/components/chat/Navbar.svelte';
-    import ChatControls from './ChatControls.svelte';
-    import EventConfirmDialog from '../common/ConfirmDialog.svelte';
-    import Placeholder from './Placeholder.svelte';
-    import NotificationToast from '../NotificationToast.svelte';
-    import Spinner from '../common/Spinner.svelte';
-    import {fade} from 'svelte/transition';
+	import Banner from '../common/Banner.svelte';
+	import MessageInput from '$lib/components/chat/MessageInput.svelte';
+	import Messages from '$lib/components/chat/Messages.svelte';
+	import Navbar from '$lib/components/chat/Navbar.svelte';
+	import ChatControls from './ChatControls.svelte';
+	import EventConfirmDialog from '../common/ConfirmDialog.svelte';
+	import Placeholder from './Placeholder.svelte';
+	import NotificationToast from '../NotificationToast.svelte';
+	import Spinner from '../common/Spinner.svelte';
+	import KnowledgeBaseManager from './KnowledgeBaseManager.svelte'; //@CDK:添加知识库管理组件
+	import { fade } from 'svelte/transition';
 
     export let chatIdProp = '';
 
@@ -145,11 +147,41 @@
 
     let taskIds = null;
 
-    // Chat Input
-    let prompt = '';
-    let chatFiles = [];
-    let files = [];
-    let params = {};
+	// @CDK: 添加知识库相关状态
+    let userKnowledgeBases = [];
+    let selectedKbId = null;
+    let showKnowledgeBaseManager = false; //@CDK:添加知识库管理显示状态
+    
+    // @CDK: 获取用户知识库列表
+    const fetchUserKnowledgeBases = async () => {
+        try {
+            if (!localStorage.token) return;
+            
+            const response = await fetch(`${WEBUI_BASE_URL}/api/v1/rag/knowledge-bases`, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            if (response.ok) {
+                const data = await response.json();
+                userKnowledgeBases = data.data || [];
+                
+                // 如果有知识库，默认选择第一个
+                if (userKnowledgeBases.length > 0 && !selectedKbId) {
+                    selectedKbId = userKnowledgeBases[0].id;
+                }
+            }
+        } catch (error) {
+            console.error('获取知识库失败:', error);
+        }
+    };
+
+	// Chat Input
+	let prompt = '';
+	let chatFiles = [];
+	let files = [];
+	let params = {};
 
     $: if (chatIdProp) {
         navigateHandler();
@@ -533,9 +565,11 @@
         const chatInput = document.getElementById('chat-input');
         chatInput?.focus();
 
-        chats.subscribe(() => {
-        });
-    });
+		chats.subscribe(() => {});
+
+		// @CDK: 在组件挂载时获取知识库列表
+        await fetchUserKnowledgeBases();
+	});
 
     onDestroy(() => {
         pageSubscribe();
@@ -1384,14 +1418,49 @@
         }
     };
 
-    //////////////////////////
-    // Chat functions
-    //////////////////////////
-    async function generateQuestionsFromPrompt(prompt, filesSubmit) {
-        // TODO：这里替换成实际调用你的题库API或后端接口逻辑：@CDK: 实现
-        try {
-            // 调用后端API生成题目
-            const result = await generateQuestion('', prompt, filesSubmit, '中等');
+	//////////////////////////
+	// Chat functions
+	//////////////////////////
+	async function generateQuestionsFromPrompt(prompt, filesSubmit) {
+		// TODO：这里替换成实际调用你的题库API或后端接口逻辑：@CDK: 实现
+		try {
+			console.log("Chat/generateQuestionsFromPrompt/enter")
+			
+			// @CDK: 获取有效的用户token
+			const userToken = localStorage.token;
+			console.log('Token状态检查:', {
+				hasToken: !!userToken,
+				tokenLength: userToken ? userToken.length : 0,
+				tokenPrefix: userToken ? userToken.substring(0, 20) + '...' : 'none'
+			});
+			
+			if (!userToken) {
+				console.error('用户未登录，无法生成题目');
+				// @CDK: 提示用户先登录
+				alert('请先登录后再使用题目生成功能');
+				throw new Error('用户未登录，请先登录');
+			}
+			
+			// @CDK: 验证token是否有效（可选）
+			try {
+				const response = await fetch(`${WEBUI_BASE_URL}/api/config`, {
+					headers: {
+						'Authorization': `Bearer ${userToken}`
+					}
+				});
+				if (!response.ok) {
+					console.error('Token无效或已过期');
+					alert('登录已过期，请重新登录');
+					throw new Error('Token无效或已过期');
+				}
+			} catch (tokenError) {
+				console.error('Token验证失败:', tokenError);
+				alert('登录验证失败，请重新登录');
+				throw new Error('Token验证失败');
+			}
+			
+			// 调用后端API生成题目，传递有效的token
+			const result = await generateQuestion(userToken, prompt, filesSubmit, selectedKbId);
 
             // 如果后端返回的是数组格式，直接返回
             if (Array.isArray(result)) {
@@ -1560,18 +1629,17 @@
         files = [];
         messageInput?.setText('');
 
-        // Create user message
-        let userMessageId = uuidv4();
-        let userMessage = {
-            id: userMessageId,
-            parentId: messages.length !== 0 ? messages.at(-1).id : null,
-            childrenIds: [],
-            role: 'user',
-            content: userPrompt,
-            files: _files.length > 0 ? _files : undefined,
-            timestamp: Math.floor(Date.now() / 1000), // Unix epoch
-            models: selectedModels
-        };
+		// Create user message
+		let userMessageId = uuidv4();
+		let userMessage = {
+			id: userMessageId,
+			parentId: messages.length !== 0 ? messages.at(-1).id : null,
+			childrenIds: [],
+			role: 'user',
+			content: userPrompt,
+			files: _files.length > 0 ? _files : undefined,
+			timestamp: Math.floor(Date.now() / 1000) // Unix epoch
+		};
 
         // Add message to history and Set currentId to messageId
         history.messages[userMessageId] = userMessage;
@@ -1692,62 +1760,63 @@
                     timestamp: Math.floor(Date.now() / 1000) // Unix epoch
                 };
 
-                if (isGenerateQuestionPrompt(prompt)) {
-                    // responseMessage.content = {
-                    // 	type: 'multiple_choice_question',
-                    // 	question: '下列哪些分子是组成细胞膜的主要成分？',
-                    // 	options: ['磷脂', 'DNA', '胆固醇', '蛋白质', '葡萄糖'],
-                    // 	answer: [0, 2, 3],
-                    // 	explanation: '细胞膜的主要成分包括磷脂双分子层、膜蛋白，以及一定量的胆固醇，起到结构稳定和流动性调节作用。'
-                    // },
+				if (isGenerateQuestionPrompt(prompt)) {
+					// responseMessage.content = {
+					// 	type: 'multiple_choice_question',
+					// 	question: '下列哪些分子是组成细胞膜的主要成分？',
+					// 	options: ['磷脂', 'DNA', '胆固醇', '蛋白质', '葡萄糖'],
+					// 	answer: [0, 2, 3],
+					// 	explanation: '细胞膜的主要成分包括磷脂双分子层、膜蛋白，以及一定量的胆固醇，起到结构稳定和流动性调节作用。'
+					// },
+					//
+					// responseMessage.content = {
+					// 	type: "true_false_question",
+					// 	question: "伽罗瓦是美国数学家",
+					// 	answer: false,
+					// 	explanation: "伽罗瓦是法国天才数学家，但是英年早逝。"
+					// },
+					//
+					// responseMessage.content = {
+					// type: "choice_question",
+					// question: "下列哪种调控方式最可能导致哺乳动物在寒冷环境中非颤抖产热（non-shivering thermogenesis）增加？",
+					// options: [
+					// 	"A. 甲状腺激素水平下降",
+					// 	"B. 迷走神经活性增强",
+					// 	"C. 去甲肾上腺素在棕色脂肪组织的释放增加",
+					// 	"D. 胰岛素分泌增加",
+					// 	"E. 肾上腺皮质醇释放减少"
+					// ],
+					// answer: 2,
+					// explanation: "非颤抖产热主要发生在棕色脂肪组织（BAT），其调控依赖于交感神经系统的激活，特别是去甲肾上腺素（norepinephrine, NE）的释放。NE通过激活β3-肾上腺素受体，启动脂肪酸氧化和解偶联蛋白1（UCP1）的表达，从而促进产热。因此，选项 C 是正确答案。\n\n其他选项分析：\n- A：甲状腺激素促进基础代谢率，其下降会减少而非增加产热。\n- B：迷走神经主要促进副交感活动，与非颤抖产热无直接关系。\n- D：胰岛素主要促进葡萄糖摄取，不是非颤抖产热的直接调控因子。\n- E：皮质醇在慢性应激中调节代谢，但不直接驱动棕色脂肪产热。"
+					// },
+					// const questionData = await fetchGeneratedQuestion(prompt);
+					// if (questionData) {
+					// 	responseMessage.content = questionData;
+					// } else {
+					// 	responseMessage.content = {
+					// 	type: "true_false_question",
+					// 	question: "伽罗瓦是美国数学家",
+					// 	answer: false,
+					// 	explanation: "伽罗瓦是法国天才数学家，但是英年早逝。"
+					// 	};
+					// }
+					// 	type: "choice_question",
+					// 	question: "下列哪种调控方式最可能导致哺乳动物在寒冷环境中非颤抖产热（non-shivering thermogenesis）增加？",
+					// 	options: [
+					// 		"A. 甲状腺激素水平下降",
+					// 		"B. 迷走神经活性增强",
+					// 		"C. 去甲肾上腺素在棕色脂肪组织的释放增加",
+					// 		"D. 胰岛素分泌增加",
+					// 		"E. 肾上腺皮质醇释放减少"
+					// 	],
+					// 	answer: 2,
+					// 	explanation: "非颤抖产热主要发生在棕色脂肪组织（BAT），其调控依赖于交感神经系统的激活，特别是去甲肾上腺素（norepinephrine, NE）的释放。NE通过激活β3-肾上腺素受体，启动脂肪酸氧化和解偶联蛋白1（UCP1）的表达，从而促进产热。因此，选项 C 是正确答案。\n\n其他选项分析：\n- A：甲状腺激素促进基础代谢率，其下降会减少而非增加产热。\n- B：迷走神经主要促进副交感活动，与非颤抖产热无直接关系。\n- D：胰岛素主要促进葡萄糖摄取，不是非颤抖产热的直接调控因子。\n- E：皮质醇在慢性应激中调节代谢，但不直接驱动棕色脂肪产热。"
+					// },
 
-                    // responseMessage.content = {
-                    // 	type: "true_false_question",
-                    // 	question: "伽罗瓦是美国数学家",
-                    // 	answer: false,
-                    // 	explanation: "伽罗瓦是法国天才数学家，但是英年早逝。"
-                    // },
-
-                    // responseMessage.content = {
-                    // type: "choice_question",
-                    // question: "下列哪种调控方式最可能导致哺乳动物在寒冷环境中非颤抖产热（non-shivering thermogenesis）增加？",
-                    // options: [
-                    // 	"A. 甲状腺激素水平下降",
-                    // 	"B. 迷走神经活性增强",
-                    // 	"C. 去甲肾上腺素在棕色脂肪组织的释放增加",
-                    // 	"D. 胰岛素分泌增加",
-                    // 	"E. 肾上腺皮质醇释放减少"
-                    // ],
-                    // answer: 2,
-                    // explanation: "非颤抖产热主要发生在棕色脂肪组织（BAT），其调控依赖于交感神经系统的激活，特别是去甲肾上腺素（norepinephrine, NE）的释放。NE通过激活β3-肾上腺素受体，启动脂肪酸氧化和解偶联蛋白1（UCP1）的表达，从而促进产热。因此，选项 C 是正确答案。\n\n其他选项分析：\n- A：甲状腺激素促进基础代谢率，其下降会减少而非增加产热。\n- B：迷走神经主要促进副交感活动，与非颤抖产热无直接关系。\n- D：胰岛素主要促进葡萄糖摄取，不是非颤抖产热的直接调控因子。\n- E：皮质醇在慢性应激中调节代谢，但不直接驱动棕色脂肪产热。"
-                    // },
-                    // const questionData = await fetchGeneratedQuestion(prompt);
-                    // if (questionData) {
-                    // 	responseMessage.content = questionData;
-                    // } else {
-                    // 	responseMessage.content = {
-                    // 	type: "true_false_question",
-                    // 	question: "伽罗瓦是美国数学家",
-                    // 	answer: false,
-                    // 	explanation: "伽罗瓦是法国天才数学家，但是英年早逝。"
-                    // 	};
-                    // }
-                    // 	type: "choice_question",
-                    // 	question: "下列哪种调控方式最可能导致哺乳动物在寒冷环境中非颤抖产热（non-shivering thermogenesis）增加？",
-                    // 	options: [
-                    // 		"A. 甲状腺激素水平下降",
-                    // 		"B. 迷走神经活性增强",
-                    // 		"C. 去甲肾上腺素在棕色脂肪组织的释放增加",
-                    // 		"D. 胰岛素分泌增加",
-                    // 		"E. 肾上腺皮质醇释放减少"
-                    // 	],
-                    // 	answer: 2,
-                    // 	explanation: "非颤抖产热主要发生在棕色脂肪组织（BAT），其调控依赖于交感神经系统的激活，特别是去甲肾上腺素（norepinephrine, NE）的释放。NE通过激活β3-肾上腺素受体，启动脂肪酸氧化和解偶联蛋白1（UCP1）的表达，从而促进产热。因此，选项 C 是正确答案。\n\n其他选项分析：\n- A：甲状腺激素促进基础代谢率，其下降会减少而非增加产热。\n- B：迷走神经主要促进副交感活动，与非颤抖产热无直接关系。\n- D：胰岛素主要促进葡萄糖摄取，不是非颤抖产热的直接调控因子。\n- E：皮质醇在慢性应激中调节代谢，但不直接驱动棕色脂肪产热。"
-                    // },
-
-                    // responseMessage.content = await generateQuestionsFromPrompt(prompt)
-                    const results = await generateQuestionsFromPrompt(prompt, filesSubmit); // 等待返回题目内容
-                    responseMessage.content = results; // 或者根据需要处理多个题目
+					// responseMessage.content = await generateQuestionsFromPrompt(prompt)
+					console.log("Chat/isGenerateQuestionPrompt/enter")
+					const results = await generateQuestionsFromPrompt(prompt, filesSubmit); // 等待返回题目内容
+					responseMessage.content = results; // 或者根据需要处理多个题目
 
                     responseMessage.done = true;
                 } else {
@@ -1890,47 +1959,47 @@
             }))
         ].filter((message) => message);
 
-        messages = messages
-            .filter((message) => {
-                // 如果是用户消息并且是“出题请求”，就跳过，不发给模型
-                if (
-                    message.role === 'user' &&
-                    typeof message.content === 'string' &&
-                    isGenerateQuestionPrompt(message.content)
-                ) {
-                    return false;
-                }
-                return true;
-            })
-            .map((message, idx, arr) => ({
-                role: message.role,
-                ...((message.files?.filter((file) => file.type === 'image').length > 0 ?? false) &&
-                message.role === 'user'
-                    ? {
-                        content: [
-                            {
-                                type: 'text',
-                                text: message?.merged?.content ?? message.content
-                            },
-                            ...message.files
-                                .filter((file) => file.type === 'image')
-                                .map((file) => ({
-                                    type: 'image_url',
-                                    image_url: {
-                                        url: file.url
-                                    }
-                                }))
-                        ]
-                    }
-                    : {
-                        content: message?.merged?.content ?? message.content
-                    })
-            }))
-            .filter(
-                (message) =>
-                    message?.role === 'user' ||
-                    (typeof message?.content === 'string' && message?.content?.trim())
-            );
+		messages = messages
+			.filter((message) => {
+				// 如果是用户消息并且是"出题请求"，就跳过，不发给模型
+				if (
+					message.role === 'user' &&
+					typeof message.content === 'string' &&
+					isGenerateQuestionPrompt(message.content)
+				) {
+					return false;
+				}
+				return true;
+			})
+			.map((message, idx, arr) => ({
+				role: message.role,
+				...((message.files?.filter((file) => file.type === 'image').length > 0 ?? false) &&
+				message.role === 'user'
+					? {
+							content: [
+								{
+									type: 'text',
+									text: message?.merged?.content ?? message.content
+								},
+								...message.files
+									.filter((file) => file.type === 'image')
+									.map((file) => ({
+										type: 'image_url',
+										image_url: {
+											url: file.url
+										}
+									}))
+							]
+						}
+					: {
+							content: message?.merged?.content ?? message.content
+						})
+			}))
+			.filter(
+				(message) =>
+					message?.role === 'user' ||
+					(typeof message?.content === 'string' && message?.content?.trim())
+			);
 
         const res = await generateOpenAIChatCompletion(
             localStorage.token,
@@ -2277,21 +2346,35 @@
         return _chatId;
     };
 
-    const saveChatHandler = async (_chatId, history) => {
-        if ($chatId == _chatId) {
-            if (!$temporaryChatEnabled) {
-                chat = await updateChatById(localStorage.token, _chatId, {
-                    models: selectedModels,
-                    history: history,
-                    messages: createMessagesList(history, history.currentId),
-                    params: params,
-                    files: chatFiles
-                });
-                currentChatPage.set(1);
-                await chats.set(await getChatList(localStorage.token, $currentChatPage));
-            }
-        }
-    };
+	const saveChatHandler = async (_chatId, history) => {
+		if ($chatId == _chatId) {
+			if (!$temporaryChatEnabled) {
+				chat = await updateChatById(localStorage.token, _chatId, {
+					models: selectedModels,
+					history: history,
+					messages: createMessagesList(history, history.currentId),
+					params: params,
+					files: chatFiles
+				});
+				currentChatPage.set(1);
+				await chats.set(await getChatList(localStorage.token, $currentChatPage));
+			}
+		}
+	};
+
+	// @CDK: 知识库管理相关函数
+	const handleKnowledgeBaseSelected = (event: CustomEvent) => {
+		selectedKbId = event.detail.kbId;
+		console.log('选中的知识库ID:', selectedKbId);
+	};
+
+	const toggleKnowledgeBaseManager = () => {
+		showKnowledgeBaseManager = !showKnowledgeBaseManager;
+	};
+
+	const refreshKnowledgeBases = async () => {
+		await fetchUserKnowledgeBases();
+	};
 </script>
 
 <svelte:head>
@@ -2405,24 +2488,55 @@
                                 </div>
                             </div>
 
-                            <div class=" pb-2">
-                                <MessageInput
-                                        bind:this={messageInput}
-                                        {history}
-                                        {taskIds}
-                                        {selectedModels}
-                                        bind:files
-                                        bind:prompt
-                                        bind:autoScroll
-                                        bind:selectedToolIds
-                                        bind:selectedFilterIds
-                                        bind:imageGenerationEnabled
-                                        bind:codeInterpreterEnabled
-                                        bind:webSearchEnabled
-                                        bind:atSelectedModel
-                                        bind:showCommands
-                                        toolServers={$toolServers}
-                                        transparentBackground={$settings?.backgroundImageUrl ??
+							<div class=" pb-2">
+								<!-- @CDK: 在MessageInput组件上方添加知识库选择器 -->
+								{#if userKnowledgeBases.length > 0}
+									<div class="flex items-center gap-2 mb-2 px-4">
+										<label class="text-sm text-gray-600 dark:text-gray-400">选择知识库:</label>
+										<select 
+											bind:value={selectedKbId}
+											class="px-3 py-1 border rounded-md text-sm bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
+										>
+											<option value={null}>使用默认知识库</option>
+											{#each userKnowledgeBases as kb}
+												<option value={kb.id}>{kb.name}</option>
+											{/each}
+										</select>
+										<button
+											on:click={toggleKnowledgeBaseManager}
+											class="px-3 py-1 text-sm bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
+										>
+											管理知识库
+										</button>
+									</div>
+								{:else}
+									<div class="flex items-center gap-2 mb-2 px-4">
+										<span class="text-sm text-gray-500 dark:text-gray-400">暂无知识库</span>
+										<button
+											on:click={toggleKnowledgeBaseManager}
+											class="px-3 py-1 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+										>
+											创建知识库
+										</button>
+									</div>
+								{/if}
+								<MessageInput
+									bind:this={messageInput}
+									{history}
+									{taskIds}
+									{selectedModels}
+									bind:files
+									bind:prompt
+									bind:autoScroll
+									bind:selectedToolIds
+									bind:selectedFilterIds
+									bind:imageGenerationEnabled
+									bind:codeInterpreterEnabled
+									bind:webSearchEnabled
+									bind:atSelectedModel
+									bind:showCommands
+									toolServers={$toolServers}
+									transparentBackground={$settings?.backgroundImageUrl ??
 										$config?.license_metadata?.background_image_url ??
 										false}
                                         {stopResponse}
@@ -2532,18 +2646,39 @@
 						}
 						return a;
 					}, [])}
-                        {submitPrompt}
-                        {stopResponse}
-                        {showMessage}
-                        {eventTarget}
-                />
-            </PaneGroup>
-        </div>
-    {:else if loading}
-        <div class=" flex items-center justify-center h-full w-full">
-            <div class="m-auto">
-                <Spinner className="size-5"/>
-            </div>
-        </div>
-    {/if}
+					{submitPrompt}
+					{stopResponse}
+					{showMessage}
+					{eventTarget}
+				/>
+			</PaneGroup>
+		</div>
+	{:else if loading}
+		<div class=" flex items-center justify-center h-full w-full">
+			<div class="m-auto">
+				<Spinner className="size-5" />
+			</div>
+		</div>
+	{/if}
+	
+	<!-- @CDK: 知识库管理组件 -->
+	{#if showKnowledgeBaseManager}
+		<div class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+			<div class="w-full max-w-6xl max-h-[90vh] overflow-auto">
+				<KnowledgeBaseManager
+					token={localStorage.token || ''}
+					bind:selectedKbId
+					on:kbSelected={handleKnowledgeBaseSelected}
+				/>
+				<div class="text-center mt-4">
+					<button
+						on:click={toggleKnowledgeBaseManager}
+						class="px-6 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
+					>
+						关闭
+					</button>
+				</div>
+			</div>
+		</div>
+	{/if}
 </div>

@@ -82,6 +82,7 @@ from open_webui.routers import (
     knowledge,
     prompts,
     question, # @CDK: 添加 question 路由
+    rag, # @CDK: 添加RAG路由
     evaluations,
     tools,
     users,
@@ -1202,6 +1203,7 @@ app.include_router(models.router, prefix="/api/v1/models", tags=["models"])
 app.include_router(knowledge.router, prefix="/api/v1/knowledge", tags=["knowledge"])
 app.include_router(prompts.router, prefix="/api/v1/prompts", tags=["prompts"])
 # app.include_router(question.router, prefix="/api/v1/question", tags=["question"]) # @CDK:添加 question 路由
+app.include_router(rag.router, prefix="/api/v1/rag", tags=["rag"]) # @CDK:添加 RAG 路由
 app.include_router(tools.router, prefix="/api/v1/tools", tags=["tools"])
 
 app.include_router(memories.router, prefix="/api/v1/memories", tags=["memories"])
@@ -1522,12 +1524,19 @@ async def list_tasks_by_chat_id_endpoint(
 
 # @CDK: 添加generate-question post方法，扩展请求参数接收
 @app.post("/api/generate-question")
-async def generate_question_api(request: Request):
+async def generate_question_api(request: Request, user=Depends(get_verified_user)):
     print("routing from main")
     data = await request.json()
+    
     # @ZHR: 新增：接收知识库ID参数
     if "kb_id" not in data:
+        print("empty kb_id")
         data["kb_id"] = None  # 默认为空（使用默认DNA知识库）
+    
+    # @CDK: 新增：添加用户ID到请求数据中
+    data["user_id"] = user.id
+    print(f"user_id: {user.id}, kb_id: {data['kb_id']}")
+    
     result = generate_question(data)
     # print(result)
     return result
