@@ -81,7 +81,6 @@ from open_webui.routers import (
     models,
     knowledge,
     prompts,
-    question, # @CDK: 添加 question 路由
     rag, # @CDK: 添加RAG路由
     evaluations,
     tools,

@@ -339,7 +339,6 @@ def is_valid_question_format(data):
     print(f"✅ 数据格式正确！共 {len(questions)} 道题目。")
     return True
 
-# 以后可能要添加用户Knowledge接口
 def generate_question(data):
     """
     生成题目主函数
