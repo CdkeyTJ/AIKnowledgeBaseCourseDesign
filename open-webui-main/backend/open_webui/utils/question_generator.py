@@ -221,7 +221,8 @@ def build_prompt(request_data):
 
 def call_qwen_model(prompt):
     # 假设本地 Ollama/LMDeploy/其他服务已启动，端口和API需根据实际情况调整
-    url = "http://localhost:11434/api/generate"
+    ollama_host = os.getenv('OLLAMA_BASE_URL', 'http://localhost:11434')
+    url = f"{ollama_host}/api/generate"
     payload = {
         "model": "qwen2.5:7b",
         "prompt": prompt,
